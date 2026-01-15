@@ -625,6 +625,36 @@
   background: #f8fafc;
 }
 
+.w9-preview-fallback-message {
+  text-align: center;
+  padding: 12px;
+  background: #f1f5f9;
+  border-radius: var(--w9-border-radius);
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: var(--w9-text-muted);
+}
+
+.w9-preview-fallback-message p {
+  margin: 0;
+}
+
+.w9-link-btn {
+  background: none;
+  border: none;
+  color: var(--w9-primary-color);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.w9-link-btn:hover {
+  color: var(--w9-primary-hover);
+}
+
 .w9-preview-summary {
   background: #f8fafc;
   padding: 20px;
