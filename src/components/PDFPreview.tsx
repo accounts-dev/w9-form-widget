@@ -138,11 +138,17 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
 
       <div className="w9-preview-frame-container">
         {previewUrl ? (
-          <iframe
-            src={previewUrl}
+          <object
+            data={previewUrl}
+            type="application/pdf"
             className="w9-preview-frame"
-            title="W9 Preview"
-          />
+            aria-label="W9 PDF Preview"
+          >
+            <div className="w9-preview-fallback">
+              <p>PDF preview is not available in your browser.</p>
+              <p>Please download the document to view it.</p>
+            </div>
+          </object>
         ) : (
           <div className="w9-preview-placeholder">
             <p>Preview loading...</p>

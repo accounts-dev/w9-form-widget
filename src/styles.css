@@ -522,6 +522,23 @@
   width: 100%;
   height: 500px;
   border: none;
+  display: block;
+}
+
+.w9-preview-fallback {
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  padding: 40px;
+  text-align: center;
+}
+
+.w9-preview-fallback p {
+  margin: 8px 0;
+  color: var(--w9-text-muted);
 }
 
 .w9-preview-placeholder {
