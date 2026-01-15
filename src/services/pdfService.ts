@@ -197,12 +197,22 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   }
 
   // ============================================
-  // SIGNATURE (still needs coordinate-based placement for drawn signatures)
+  // SIGNATURE & DATE (no form fields - use coordinate placement)
+  // The "Sign Here" section is at the bottom of the W9 form
+  // W9 PDF is typically 792 points tall (11 inches)
+  // Signature line is approximately at Y=55 from bottom
   // ============================================
   const pages = pdfDoc.getPages();
   const firstPage = pages[0];
-  const { height } = firstPage.getSize();
+  const { width, height } = firstPage.getSize();
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  
+  console.log(`PDF dimensions: ${width} x ${height}`);
+  
+  // Signature area: "Signature of U.S. person" is on the left
+  // The signature line starts around x=75 and the date field is on the right around x=465
+  const signatureY = 55; // Distance from BOTTOM of page
+  const dateY = 55;
 
   if (formData.signature) {
     if (formData.signatureType === 'drawn') {
@@ -211,40 +221,45 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
         const signatureBytes = Uint8Array.from(atob(signatureData), c => c.charCodeAt(0));
         const signatureImage = await pdfDoc.embedPng(signatureBytes);
         
+        // Scale signature to fit nicely above the line
         const sigWidth = 180;
         const sigHeight = (signatureImage.height / signatureImage.width) * sigWidth;
+        const cappedHeight = Math.min(sigHeight, 25); // Cap height to fit
         
         firstPage.drawImage(signatureImage, {
           x: 75,
-          y: height - 740,
+          y: signatureY + 2, // Slightly above the signature line
           width: sigWidth,
-          height: Math.min(sigHeight, 30),
+          height: cappedHeight,
         });
+        console.log(`Drew signature image at x=75, y=${signatureY + 2}`);
       } catch (error) {
         console.error('Failed to embed signature image:', error);
       }
     } else {
-      // Typed signature
+      // Typed signature - place text on the signature line
       firstPage.drawText(formData.signature, {
         x: 75,
-        y: height - 733,
-        size: 12,
+        y: signatureY + 5,
+        size: 11,
         font: helvetica,
         color: rgb(0, 0, 0),
       });
+      console.log(`Drew typed signature at x=75, y=${signatureY + 5}`);
     }
   }
 
-  // Signature date
+  // Date field is to the right of the signature
   if (formData.signatureDate) {
     const dateStr = new Date(formData.signatureDate).toLocaleDateString('en-US');
     firstPage.drawText(dateStr, {
-      x: 470,
-      y: height - 733,
+      x: 465,
+      y: dateY + 5,
       size: 10,
       font: helvetica,
       color: rgb(0, 0, 0),
     });
+    console.log(`Drew date "${dateStr}" at x=465, y=${dateY + 5}`);
   }
 
   // Optionally flatten the form to prevent further editing
