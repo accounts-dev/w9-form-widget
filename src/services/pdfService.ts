@@ -52,88 +52,118 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
 
   // ============================================
   // FILL IN FORM FIELDS
-  // These coordinates are approximate and may need adjustment
-  // based on the actual W9 PDF template layout
+  // Coordinates adjusted for W9 form (March 2024 revision)
+  // Y coordinates are from TOP of page
   // ============================================
 
-  // Line 1: Name
+  // Line 1: Name (field is below the label "Name of entity/individual...")
   if (formData.name) {
-    drawText(formData.name, 65, 142);
+    drawText(formData.name, 45, 119);
   }
 
-  // Line 2: Business name
+  // Line 2: Business name/disregarded entity name
   if (formData.businessName) {
-    drawText(formData.businessName, 65, 167);
+    drawText(formData.businessName, 45, 145);
   }
 
-  // Line 3: Federal Tax Classification checkboxes
-  // Approximate checkbox positions (x coordinates for each classification)
-  const taxClassificationPositions: Record<string, number> = {
-    individual: 65,
-    cCorporation: 165,
-    sCorporation: 215,
-    partnership: 265,
-    trustEstate: 331,
-    llc: 410,
-    other: 530
+  // Line 3a: Federal Tax Classification checkboxes
+  // These are the checkbox positions on the form
+  const taxClassificationPositions: Record<string, { x: number; y: number }> = {
+    individual: { x: 36, y: 182 },
+    cCorporation: { x: 154, y: 182 },
+    sCorporation: { x: 229, y: 182 },
+    partnership: { x: 304, y: 182 },
+    trustEstate: { x: 365, y: 182 },
+    llc: { x: 36, y: 197 },
+    other: { x: 36, y: 232 }
   };
 
   if (formData.taxClassification && taxClassificationPositions[formData.taxClassification]) {
-    drawCheckmark(taxClassificationPositions[formData.taxClassification], 198);
+    const pos = taxClassificationPositions[formData.taxClassification];
+    drawCheckmark(pos.x, pos.y);
   }
 
-  // LLC Classification letter
+  // LLC Classification letter (in the entry space after "Enter the tax classification")
   if (formData.taxClassification === 'llc' && formData.llcClassification) {
-    drawText(formData.llcClassification, 445, 198);
+    drawText(formData.llcClassification.toUpperCase(), 385, 197);
   }
 
   // Other description
   if (formData.taxClassification === 'other' && formData.otherDescription) {
-    drawText(formData.otherDescription, 553, 198);
+    drawText(formData.otherDescription, 115, 232);
   }
 
-  // Line 4: Exemptions
+  // Line 4: Exemptions (right side of form)
   if (formData.exemptPayeeCode) {
-    drawText(formData.exemptPayeeCode, 505, 215);
+    drawText(formData.exemptPayeeCode, 518, 165);
   }
   if (formData.fatcaExemptionCode) {
-    drawText(formData.fatcaExemptionCode, 505, 230);
+    drawText(formData.fatcaExemptionCode, 518, 209);
   }
 
-  // Line 5: Address
+  // Requester's name and address (optional field on right side)
+  // Skip this as it's usually filled by the requester
+
+  // Line 5: Address (number, street, apt/suite)
   if (formData.address) {
-    drawText(formData.address, 65, 250);
+    drawText(formData.address, 45, 278);
   }
 
-  // Line 6: City, State, ZIP
+  // Line 6: City, State, ZIP code
   const cityStateZip = [formData.city, formData.state, formData.zipCode]
     .filter(Boolean)
     .join(', ');
   if (cityStateZip) {
-    drawText(cityStateZip, 65, 275);
+    drawText(cityStateZip, 45, 303);
   }
 
-  // Line 7: Account numbers (if provided)
+  // Line 7: List account number(s) (optional)
   if (formData.accountNumbers) {
-    drawText(formData.accountNumbers, 65, 300);
+    drawText(formData.accountNumbers, 45, 328);
   }
 
-  // Part I: TIN - SSN or EIN
+  // Part I: TIN - Social Security Number (SSN)
+  // The SSN boxes are on the right side, format: XXX-XX-XXXX
   if (formData.tinType === 'ssn' && formData.ssn) {
-    // SSN boxes - typically 3 boxes for XXX-XX-XXXX format
     const ssnDigits = formData.ssn.replace(/\D/g, '');
-    // Position for SSN (right side of form)
-    drawText(ssnDigits.substring(0, 3), 506, 299);
-    drawText(ssnDigits.substring(3, 5), 545, 299);
-    drawText(ssnDigits.substring(5, 9), 573, 299);
-  } else if (formData.tinType === 'ein' && formData.ein) {
-    // EIN boxes - typically 2 boxes for XX-XXXXXXX format
+    if (ssnDigits.length >= 9) {
+      // Draw each digit in its box - SSN section
+      // First 3 digits
+      drawText(ssnDigits[0], 512, 361);
+      drawText(ssnDigits[1], 524, 361);
+      drawText(ssnDigits[2], 536, 361);
+      // Middle 2 digits
+      drawText(ssnDigits[3], 555, 361);
+      drawText(ssnDigits[4], 567, 361);
+      // Last 4 digits
+      drawText(ssnDigits[5], 586, 361);
+      drawText(ssnDigits[6], 598, 361);
+      drawText(ssnDigits[7], 610, 361);
+      drawText(ssnDigits[8], 622, 361);
+    }
+  }
+  
+  // Part I: TIN - Employer Identification Number (EIN)
+  // The EIN boxes are below SSN, format: XX-XXXXXXX
+  if (formData.tinType === 'ein' && formData.ein) {
     const einDigits = formData.ein.replace(/\D/g, '');
-    drawText(einDigits.substring(0, 2), 506, 318);
-    drawText(einDigits.substring(2, 9), 538, 318);
+    if (einDigits.length >= 9) {
+      // First 2 digits
+      drawText(einDigits[0], 512, 398);
+      drawText(einDigits[1], 524, 398);
+      // Last 7 digits
+      drawText(einDigits[2], 543, 398);
+      drawText(einDigits[3], 555, 398);
+      drawText(einDigits[4], 567, 398);
+      drawText(einDigits[5], 579, 398);
+      drawText(einDigits[6], 591, 398);
+      drawText(einDigits[7], 603, 398);
+      drawText(einDigits[8], 615, 398);
+    }
   }
 
-  // Part II: Signature
+  // Part II: Signature area (at the bottom of the form)
+  // "Sign Here" section
   if (formData.signature) {
     if (formData.signatureType === 'drawn') {
       // Embed signature image
@@ -145,33 +175,32 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
         // Embed as PNG
         const signatureImage = await pdfDoc.embedPng(signatureBytes);
         
-        // Scale signature to fit
-        const sigWidth = 150;
+        // Scale signature to fit the signature field
+        const sigWidth = 180;
         const sigHeight = (signatureImage.height / signatureImage.width) * sigWidth;
         
-        // Draw signature image
+        // Draw signature image in the signature field area
         firstPage.drawImage(signatureImage, {
-          x: 65,
-          y: height - 710 - sigHeight,
+          x: 75,
+          y: height - 740,
           width: sigWidth,
-          height: sigHeight,
+          height: Math.min(sigHeight, 30), // Cap height to fit field
         });
       } catch (error) {
         console.error('Failed to embed signature image:', error);
         // Fallback: draw signature as text
-        drawText('[Signature on file]', 65, 710);
+        drawText('[Signature on file]', 75, 733);
       }
     } else {
-      // Typed signature - use cursive-style font
-      // Note: StandardFonts doesn't have a true cursive, so we'll use italic or just helvetica
-      drawText(formData.signature, 65, 710, { size: 14 });
+      // Typed signature - use a larger font for visibility
+      drawText(formData.signature, 75, 733, { size: 12 });
     }
   }
 
-  // Signature date
+  // Signature date (right side of signature line)
   if (formData.signatureDate) {
     const dateStr = new Date(formData.signatureDate).toLocaleDateString('en-US');
-    drawText(dateStr, 350, 710);
+    drawText(dateStr, 470, 733);
   }
 
   // Serialize the PDF to bytes
