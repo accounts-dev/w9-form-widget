@@ -165,17 +165,6 @@ export const StepCustodian: React.FC<StepCustodianProps> = ({
         </>
       )}
 
-      {formData.custodian && formData.custodian !== 'other' && (
-        <div className="info-box">
-          <strong>Custodian Address:</strong>
-          <p>
-            {custodianData[formData.custodian].name}<br />
-            {custodianData[formData.custodian].address}<br />
-            {custodianData[formData.custodian].city}, {custodianData[formData.custodian].state} {custodianData[formData.custodian].zip}
-          </p>
-        </div>
-      )}
-
       <div className="form-group">
         <label htmlFor="iraAccountNumber">
           IRA Account Number <span className="required">*</span>
