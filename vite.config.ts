@@ -6,6 +6,10 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  define: {
+    'process.env': {},
+    'process.env.NODE_ENV': JSON.stringify('production')
+  },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/widget.tsx'),
