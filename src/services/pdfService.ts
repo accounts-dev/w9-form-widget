@@ -197,6 +197,6 @@ export function downloadPDF(pdfBytes: Uint8Array, filename: string = 'W9-Filled.
 
 // Helper function to create a preview URL
 export function createPDFPreviewURL(pdfBytes: Uint8Array): string {
-  const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+  const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
   return URL.createObjectURL(blob);
 }

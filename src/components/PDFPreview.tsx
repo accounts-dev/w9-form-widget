@@ -37,14 +37,17 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
     setError(null);
     
     try {
+      console.log('Generating PDF with formData:', formData);
       const bytes = await generateFilledW9PDF(formData);
+      console.log('PDF generated, size:', bytes.length, 'bytes');
       setPdfBytes(bytes);
       
       const url = createPDFPreviewURL(bytes);
+      console.log('Preview URL created:', url);
       setPreviewUrl(url);
     } catch (err) {
       console.error('Failed to generate PDF:', err);
-      setError('Failed to generate PDF. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to generate PDF. Please try again.');
     } finally {
       setIsGenerating(false);
     }
