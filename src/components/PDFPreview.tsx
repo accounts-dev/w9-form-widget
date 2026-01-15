@@ -3,8 +3,8 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { W9FormData } from '../types';
 import { generateFilledW9PDF, downloadPDF } from '../services/pdfService';
 
-// Configure PDF.js worker to use local file
-pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+// Configure PDF.js worker with exact matching version from CDN (jsdelivr has proper CORS)
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface PDFPreviewProps {
   formData: W9FormData;
