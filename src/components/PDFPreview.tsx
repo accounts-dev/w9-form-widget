@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
 import { W9FormData } from '../types';
 import { generateFilledW9PDF, downloadPDF } from '../services/pdfService';
-
-// Configure PDF.js worker with exact matching version from CDN (jsdelivr has proper CORS)
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface PDFPreviewProps {
   formData: W9FormData;
@@ -20,15 +16,20 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
   setIsGenerating
 }) => {
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
-  const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadComplete, setDownloadComplete] = useState(false);
 
   useEffect(() => {
     generatePreview();
+    
+    // Cleanup blob URL on unmount
+    return () => {
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl);
+      }
+    };
   }, []);
 
   const generatePreview = async () => {
@@ -41,30 +42,17 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
       console.log('PDF generated, size:', bytes.length, 'bytes');
       setPdfBytes(bytes);
       
-      // Convert to data URL for react-pdf
+      // Create blob URL for native browser PDF viewer
       const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' });
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPdfDataUrl(reader.result as string);
-        console.log('PDF data URL created');
-      };
-      reader.readAsDataURL(blob);
+      const url = URL.createObjectURL(blob);
+      setPdfBlobUrl(url);
+      console.log('PDF blob URL created');
     } catch (err) {
       console.error('Failed to generate PDF:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate PDF. Please try again.');
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    console.log('PDF loaded successfully, pages:', numPages);
-  };
-
-  const onDocumentLoadError = (error: Error) => {
-    console.error('Error loading PDF:', error);
-    setError('Failed to load PDF preview. You can still download the document.');
   };
 
   const handleDownload = () => {
@@ -88,8 +76,13 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
   const handleStartNew = () => {
     setDownloadComplete(false);
     onEdit();
-    // Reset form by reloading (or we could pass a reset function)
     window.location.reload();
+  };
+
+  const handleOpenInNewTab = () => {
+    if (pdfBlobUrl) {
+      window.open(pdfBlobUrl, '_blank');
+    }
   };
 
   if (isGenerating) {
@@ -151,49 +144,28 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
       </div>
 
       <div className="w9-preview-frame-container">
-        {pdfDataUrl ? (
-          <>
-            <Document
-              file={pdfDataUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={onDocumentLoadError}
-              className="w9-pdf-document"
-            >
-              <Page
-                pageNumber={pageNumber}
-                className="w9-pdf-page"
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                width={650}
-              />
-            </Document>
-            {numPages && numPages > 1 && (
-              <div className="w9-pdf-controls">
-                <button
-                  className="w9-pdf-nav-btn"
-                  onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
-                  disabled={pageNumber <= 1}
-                >
-                  ← Previous
-                </button>
-                <span className="w9-pdf-page-info">
-                  Page {pageNumber} of {numPages}
-                </span>
-                <button
-                  className="w9-pdf-nav-btn"
-                  onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
-                  disabled={pageNumber >= numPages}
-                >
-                  Next →
-                </button>
-              </div>
-            )}
-          </>
+        {pdfBlobUrl ? (
+          <embed
+            src={pdfBlobUrl}
+            type="application/pdf"
+            className="w9-preview-frame"
+            title="W9 Preview"
+          />
         ) : (
           <div className="w9-preview-placeholder">
             <p>Loading preview...</p>
           </div>
         )}
+      </div>
+
+      {/* Fallback message */}
+      <div className="w9-preview-fallback-message">
+        <p>
+          Can't see the preview? 
+          <button className="w9-link-btn" onClick={handleOpenInNewTab}>
+            Open in new tab
+          </button>
+        </p>
       </div>
 
       <div className="w9-preview-summary">
