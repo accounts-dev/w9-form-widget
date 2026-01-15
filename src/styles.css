@@ -1005,3 +1005,51 @@
 .required {
   color: var(--w9-error-color);
 }
+
+/* ============================================
+   IRA EIN Emphasized Notice
+   ============================================ */
+.w9-ira-ein-notice {
+  display: flex;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(247, 161, 26, 0.12) 0%, rgba(247, 161, 26, 0.06) 100%);
+  border: 2px solid var(--w9-primary-color);
+  border-radius: var(--w9-border-radius);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.w9-ira-ein-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.w9-ira-ein-content {
+  flex: 1;
+  font-size: 14px;
+  color: var(--w9-text-color);
+  line-height: 1.5;
+}
+
+.w9-ira-ein-content strong {
+  color: var(--w9-secondary-color);
+}
+
+.w9-ira-ein-list {
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+}
+
+.w9-ira-ein-list li {
+  margin-bottom: 4px;
+  color: var(--w9-text-muted);
+}
+
+.w9-ira-ein-list li strong {
+  color: var(--w9-error-color);
+}
+
+.w9-input-ira-ein {
+  border: 2px solid var(--w9-primary-color) !important;
+  background: rgba(247, 161, 26, 0.03);
+}
