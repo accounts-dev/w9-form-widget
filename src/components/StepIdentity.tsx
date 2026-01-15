@@ -12,14 +12,32 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
   updateFormData,
   errors
 }) => {
+  const isIRA = formData.accountType === 'ira';
+  const isIndividual = formData.accountType === 'individual';
+  const hideBusinessName = isIRA || isIndividual;
+
   return (
     <div className="w9-step">
+      {isIRA && (
+        <div className="w9-info-message" style={{ 
+          background: 'rgba(247, 161, 26, 0.05)', 
+          border: '1px solid rgba(247, 161, 26, 0.2)',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '20px'
+        }}>
+          <strong>IRA Account:</strong> Your name will appear on Line 2 as "FBO [Your Name] IRA". 
+          Line 1 will show the custodian name.
+        </div>
+      )}
       <div className="w9-form-group">
         <label htmlFor="name" className="w9-label">
-          Name <span className="w9-required">*</span>
+          {isIRA ? 'Your Name (Investor)' : 'Name'} <span className="w9-required">*</span>
         </label>
         <p className="w9-help-text">
-          Enter your name as shown on your income tax return
+          {isIRA 
+            ? 'Enter your full legal name as the IRA account holder' 
+            : 'Enter your name as shown on your income tax return'}
         </p>
         <input
           type="text"
@@ -32,22 +50,24 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
         {errors.name && <span className="w9-error-message">{errors.name}</span>}
       </div>
 
-      <div className="w9-form-group">
-        <label htmlFor="businessName" className="w9-label">
-          Business Name
-        </label>
-        <p className="w9-help-text">
-          If different from above. Disregarded entity name, if applicable.
-        </p>
-        <input
-          type="text"
-          id="businessName"
-          className="w9-input"
-          value={formData.businessName}
-          onChange={(e) => updateFormData({ businessName: e.target.value })}
-          placeholder="Business name or disregarded entity name (optional)"
-        />
-      </div>
+      {!hideBusinessName && (
+        <div className="w9-form-group">
+          <label htmlFor="businessName" className="w9-label">
+            Business Name
+          </label>
+          <p className="w9-help-text">
+            If different from above. Disregarded entity name, if applicable.
+          </p>
+          <input
+            type="text"
+            id="businessName"
+            className="w9-input"
+            value={formData.businessName}
+            onChange={(e) => updateFormData({ businessName: e.target.value })}
+            placeholder="Business name or disregarded entity name (optional)"
+          />
+        </div>
+      )}
     </div>
   );
 };

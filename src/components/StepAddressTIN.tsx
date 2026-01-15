@@ -1,5 +1,5 @@
 import React from 'react';
-import { W9FormData, ValidationErrors, TINType, usStates } from '../types';
+import { W9FormData, ValidationErrors, TINType, usStates, custodianData } from '../types';
 
 interface StepAddressTINProps {
   formData: W9FormData;
@@ -78,75 +78,118 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
     <div className="w9-step">
       {/* Address Section */}
       <div className="w9-section">
-        <h3 className="w9-section-title">Address</h3>
+        <h3 className="w9-section-title">
+          {isIRA ? 'Custodian Address (for W-9)' : 'Address'}
+        </h3>
         
-        <div className="w9-form-group">
-          <label htmlFor="address" className="w9-label">
-            Street Address <span className="w9-required">*</span>
-          </label>
-          <input
-            type="text"
-            id="address"
-            className={`w9-input ${errors.address ? 'w9-input-error' : ''}`}
-            value={formData.address}
-            onChange={(e) => updateFormData({ address: e.target.value })}
-            placeholder="Number, street, and apt. or suite no."
-          />
-          {errors.address && <span className="w9-error-message">{errors.address}</span>}
-        </div>
-
-        <div className="w9-form-row">
-          <div className="w9-form-group w9-form-group-half">
-            <label htmlFor="city" className="w9-label">
-              City <span className="w9-required">*</span>
-            </label>
-            <input
-              type="text"
-              id="city"
-              className={`w9-input ${errors.city ? 'w9-input-error' : ''}`}
-              value={formData.city}
-              onChange={(e) => updateFormData({ city: e.target.value })}
-              placeholder="City"
-            />
-            {errors.city && <span className="w9-error-message">{errors.city}</span>}
+        {isIRA && formData.custodian && formData.custodian !== 'other' ? (
+          // Pre-configured custodian: show read-only address
+          <div className="w9-info-message" style={{ 
+            background: 'rgba(247, 161, 26, 0.05)', 
+            border: '1px solid rgba(247, 161, 26, 0.2)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '20px'
+          }}>
+            <strong>Custodian Address (auto-filled):</strong>
+            <p style={{ margin: '8px 0 0 0', lineHeight: '1.6' }}>
+              {custodianData[formData.custodian].address}<br />
+              {custodianData[formData.custodian].city}, {custodianData[formData.custodian].state} {custodianData[formData.custodian].zip}
+            </p>
+            <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#5a6c7d' }}>
+              This address cannot be edited. The W-9 requires the custodian's address for IRA accounts.
+            </p>
           </div>
-
-          <div className="w9-form-group w9-form-group-quarter">
-            <label htmlFor="state" className="w9-label">
-              State <span className="w9-required">*</span>
-            </label>
-            <select
-              id="state"
-              className={`w9-select ${errors.state ? 'w9-input-error' : ''}`}
-              value={formData.state}
-              onChange={(e) => updateFormData({ state: e.target.value })}
-            >
-              <option value="">Select</option>
-              {usStates.map((state) => (
-                <option key={state.value} value={state.value}>
-                  {state.value}
-                </option>
-              ))}
-            </select>
-            {errors.state && <span className="w9-error-message">{errors.state}</span>}
+        ) : isIRA && formData.custodian === 'other' ? (
+          // "Other" custodian: address was entered in previous step, show confirmation
+          <div className="w9-info-message" style={{ 
+            background: 'rgba(247, 161, 26, 0.05)', 
+            border: '1px solid rgba(247, 161, 26, 0.2)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '20px'
+          }}>
+            <strong>Custodian Address (from previous step):</strong>
+            <p style={{ margin: '8px 0 0 0', lineHeight: '1.6' }}>
+              {formData.custodianAddress}<br />
+              {formData.custodianCity}, {formData.custodianState} {formData.custodianZip}
+            </p>
+            <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#5a6c7d' }}>
+              This address will be used on the W-9. To change it, go back to the Custodian step.
+            </p>
           </div>
+        ) : (
+          // Non-IRA: show editable address fields
+          <>
+            <div className="w9-form-group">
+              <label htmlFor="address" className="w9-label">
+                Street Address <span className="w9-required">*</span>
+              </label>
+              <input
+                type="text"
+                id="address"
+                className={`w9-input ${errors.address ? 'w9-input-error' : ''}`}
+                value={formData.address}
+                onChange={(e) => updateFormData({ address: e.target.value })}
+                placeholder="Number, street, and apt. or suite no."
+              />
+              {errors.address && <span className="w9-error-message">{errors.address}</span>}
+            </div>
 
-          <div className="w9-form-group w9-form-group-quarter">
-            <label htmlFor="zipCode" className="w9-label">
-              ZIP Code <span className="w9-required">*</span>
-            </label>
-            <input
-              type="text"
-              id="zipCode"
-              className={`w9-input ${errors.zipCode ? 'w9-input-error' : ''}`}
-              value={formData.zipCode}
-              onChange={(e) => handleZIPChange(e.target.value)}
-              placeholder="12345"
-              maxLength={10}
-            />
-            {errors.zipCode && <span className="w9-error-message">{errors.zipCode}</span>}
-          </div>
-        </div>
+            <div className="w9-form-row">
+              <div className="w9-form-group w9-form-group-half">
+                <label htmlFor="city" className="w9-label">
+                  City <span className="w9-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="city"
+                  className={`w9-input ${errors.city ? 'w9-input-error' : ''}`}
+                  value={formData.city}
+                  onChange={(e) => updateFormData({ city: e.target.value })}
+                  placeholder="City"
+                />
+                {errors.city && <span className="w9-error-message">{errors.city}</span>}
+              </div>
+
+              <div className="w9-form-group w9-form-group-quarter">
+                <label htmlFor="state" className="w9-label">
+                  State <span className="w9-required">*</span>
+                </label>
+                <select
+                  id="state"
+                  className={`w9-select ${errors.state ? 'w9-input-error' : ''}`}
+                  value={formData.state}
+                  onChange={(e) => updateFormData({ state: e.target.value })}
+                >
+                  <option value="">Select</option>
+                  {usStates.map((state) => (
+                    <option key={state.value} value={state.value}>
+                      {state.value}
+                    </option>
+                  ))}
+                </select>
+                {errors.state && <span className="w9-error-message">{errors.state}</span>}
+              </div>
+
+              <div className="w9-form-group w9-form-group-quarter">
+                <label htmlFor="zipCode" className="w9-label">
+                  ZIP Code <span className="w9-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="zipCode"
+                  className={`w9-input ${errors.zipCode ? 'w9-input-error' : ''}`}
+                  value={formData.zipCode}
+                  onChange={(e) => handleZIPChange(e.target.value)}
+                  placeholder="12345"
+                  maxLength={10}
+                />
+                {errors.zipCode && <span className="w9-error-message">{errors.zipCode}</span>}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* TIN Section */}

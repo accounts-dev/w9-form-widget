@@ -103,9 +103,9 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
     ], formData.name);
   }
 
-  // Line 2: Business name (for IRA: "FBO [Investor Name]")
+  // Line 2: Business name (for IRA: "FBO [Investor Name] IRA")
   if (isIRA && formData.name) {
-    const fboName = `FBO ${formData.name}`;
+    const fboName = `FBO ${formData.name} IRA`;
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].f1_02[0]'
     ], fboName);

@@ -303,19 +303,23 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
       break;
       
     case 4:
-      if (!data.address.trim()) {
-        errors.address = 'Address is required';
-      }
-      if (!data.city.trim()) {
-        errors.city = 'City is required';
-      }
-      if (!data.state) {
-        errors.state = 'State is required';
-      }
-      if (!data.zipCode.trim()) {
-        errors.zipCode = 'ZIP code is required';
-      } else if (!/^\d{5}(-\d{4})?$/.test(data.zipCode)) {
-        errors.zipCode = 'Invalid ZIP code format';
+      // For IRA accounts, address comes from custodian data - no validation needed
+      // For non-IRA accounts, validate personal address
+      if (data.accountType !== 'ira') {
+        if (!data.address.trim()) {
+          errors.address = 'Address is required';
+        }
+        if (!data.city.trim()) {
+          errors.city = 'City is required';
+        }
+        if (!data.state) {
+          errors.state = 'State is required';
+        }
+        if (!data.zipCode.trim()) {
+          errors.zipCode = 'ZIP code is required';
+        } else if (!/^\d{5}(-\d{4})?$/.test(data.zipCode)) {
+          errors.zipCode = 'Invalid ZIP code format';
+        }
       }
       
       // TIN validation - different for IRA vs non-IRA

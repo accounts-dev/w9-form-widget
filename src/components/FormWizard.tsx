@@ -21,13 +21,20 @@ export const FormWizard: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Auto-set tax classification for IRA accounts
+  // Auto-set tax classification based on account type
   useEffect(() => {
     if (formData.accountType === 'ira') {
       setFormData(prev => ({
         ...prev,
         taxClassification: 'other',
         otherDescription: 'IRA'
+      }));
+    } else if (formData.accountType === 'individual') {
+      setFormData(prev => ({
+        ...prev,
+        taxClassification: 'individual',
+        llcClassification: null,
+        otherDescription: ''
       }));
     }
   }, [formData.accountType]);
@@ -47,23 +54,23 @@ export const FormWizard: React.FC = () => {
     updateFormData({ [field]: value });
   };
 
-  // Fill with test data (for development/testing)
+  // Fill with test data (for development/testing) - Individual account
   const fillTestData = () => {
     setFormData({
-      accountType: 'ira',
-      custodian: 'equity-trust',
-      custodianName: 'Equity Trust Company',
-      custodianAddress: '1 Equity Way',
-      custodianCity: 'Westlake',
-      custodianState: 'OH',
-      custodianZip: '44145',
-      iraAccountNumber: 'IRA123456789',
-      iraEin: '12-3456789',
+      accountType: 'individual',
+      custodian: null,
+      custodianName: '',
+      custodianAddress: '',
+      custodianCity: '',
+      custodianState: '',
+      custodianZip: '',
+      iraAccountNumber: '',
+      iraEin: '',
       name: 'John A. Doe',
       businessName: '',
-      taxClassification: 'other',
+      taxClassification: 'individual',
       llcClassification: null,
-      otherDescription: 'IRA',
+      otherDescription: '',
       exemptPayeeCode: '',
       fatcaExemptionCode: '',
       address: '123 Main Street',
@@ -73,7 +80,7 @@ export const FormWizard: React.FC = () => {
       requesterNameAddress: '',
       accountNumbers: '',
       tinType: 'ssn',
-      ssn: '',
+      ssn: '123-45-6789',
       ein: '',
       signature: 'John A. Doe',
       signatureType: 'typed',
@@ -90,8 +97,16 @@ export const FormWizard: React.FC = () => {
       steps.push(formSteps[1]); // Custodian
     }
     
-    // Add remaining steps (Identity, Tax Classification, Address/TIN, Signature)
-    steps.push(formSteps[2], formSteps[3], formSteps[4], formSteps[5]);
+    // Add Identity step
+    steps.push(formSteps[2]);
+    
+    // Skip Tax Classification for IRA and Individual (auto-set)
+    if (formData.accountType !== 'ira' && formData.accountType !== 'individual') {
+      steps.push(formSteps[3]); // Tax Classification
+    }
+    
+    // Add Address/TIN and Signature
+    steps.push(formSteps[4], formSteps[5]);
     
     return steps;
   };
