@@ -3,8 +3,8 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { W9FormData } from '../types';
 import { generateFilledW9PDF, downloadPDF } from '../services/pdfService';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Configure PDF.js worker to use local file
+pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
 
 interface PDFPreviewProps {
   formData: W9FormData;
