@@ -205,16 +205,16 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   
   // The W9 form page 1 is typically 792 points tall (US Letter)
   // The "Sign Here" row is approximately:
-  // - About 200 points from the bottom
-  // - Signature area starts around x=70
-  // - Date field is around x=415
+  // - About 180 points from the bottom
+  // - Signature area starts around x=140
+  // - Date field is around x=418
   
-  const signatureFieldX = 70;
-  const signatureFieldY = 200; // from bottom
+  const signatureFieldX = 140;
+  const signatureFieldY = 180; // from bottom
   const signatureFieldWidth = 300;
   
   const dateFieldX = 418;
-  const dateFieldY = 200;
+  const dateFieldY = 180;
 
   if (formData.signature) {
     if (formData.signatureType === 'drawn') {
