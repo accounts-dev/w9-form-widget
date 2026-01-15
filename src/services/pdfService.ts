@@ -80,38 +80,32 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
 
   // ============================================
   // FILL FORM FIELDS BY NAME
-  // Field names may vary between PDF versions
+  // Field names from actual W9 PDF (March 2024 revision)
   // ============================================
 
   // Line 1: Name
   if (formData.name) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_1[0]',
-      'f1_1',
-      'f1_01',
-      'Name'
+      'topmostSubform[0].Page1[0].f1_01[0]'
     ], formData.name);
   }
 
   // Line 2: Business name
   if (formData.businessName) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_2[0]',
-      'f1_2',
-      'f1_02',
-      'BusinessName'
+      'topmostSubform[0].Page1[0].f1_02[0]'
     ], formData.businessName);
   }
 
   // Line 3: Tax classification checkboxes
   const taxClassificationCheckboxes: Record<string, string[]> = {
-    individual: ['topmostSubform[0].Page1[0].c1_1[0]', 'c1_1[0]', 'c1_1', 'Individual'],
-    cCorporation: ['topmostSubform[0].Page1[0].c1_1[1]', 'c1_1[1]', 'c1_2', 'CCorporation'],
-    sCorporation: ['topmostSubform[0].Page1[0].c1_1[2]', 'c1_1[2]', 'c1_3', 'SCorporation'],
-    partnership: ['topmostSubform[0].Page1[0].c1_1[3]', 'c1_1[3]', 'c1_4', 'Partnership'],
-    trustEstate: ['topmostSubform[0].Page1[0].c1_1[4]', 'c1_1[4]', 'c1_5', 'TrustEstate'],
-    llc: ['topmostSubform[0].Page1[0].c1_1[5]', 'c1_1[5]', 'c1_6', 'LLC'],
-    other: ['topmostSubform[0].Page1[0].c1_1[6]', 'c1_1[6]', 'c1_7', 'Other']
+    individual: ['topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[0]'],
+    cCorporation: ['topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[1]'],
+    sCorporation: ['topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[2]'],
+    partnership: ['topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[3]'],
+    trustEstate: ['topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[4]'],
+    llc: ['topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[5]'],
+    other: ['topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[6]']
   };
 
   if (formData.taxClassification && taxClassificationCheckboxes[formData.taxClassification]) {
@@ -121,50 +115,35 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   // LLC Classification letter
   if (formData.taxClassification === 'llc' && formData.llcClassification) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_3[0]',
-      'f1_3',
-      'f1_03',
-      'LLCClassification'
+      'topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0]'
     ], formData.llcClassification.toUpperCase());
   }
 
   // Other description
   if (formData.taxClassification === 'other' && formData.otherDescription) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_4[0]',
-      'f1_4',
-      'f1_04',
-      'OtherDescription'
+      'topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0]'
     ], formData.otherDescription);
   }
 
   // Exempt payee code
   if (formData.exemptPayeeCode) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_5[0]',
-      'f1_5',
-      'f1_05',
-      'ExemptPayeeCode'
+      'topmostSubform[0].Page1[0].f1_05[0]'
     ], formData.exemptPayeeCode);
   }
 
   // FATCA exemption code
   if (formData.fatcaExemptionCode) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_6[0]',
-      'f1_6',
-      'f1_06',
-      'FATCACode'
+      'topmostSubform[0].Page1[0].f1_06[0]'
     ], formData.fatcaExemptionCode);
   }
 
   // Line 5: Address
   if (formData.address) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_7[0]',
-      'f1_7',
-      'f1_07',
-      'Address'
+      'topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]'
     ], formData.address);
   }
 
@@ -172,44 +151,48 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   const cityStateZip = [formData.city, formData.state, formData.zipCode].filter(Boolean).join(', ');
   if (cityStateZip) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_8[0]',
-      'f1_8',
-      'f1_08',
-      'CityStateZIP'
+      'topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]'
     ], cityStateZip);
   }
 
   // Line 7: Account numbers (optional)
   if (formData.accountNumbers) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_9[0]',
-      'f1_9',
-      'f1_09',
-      'AccountNumbers'
+      'topmostSubform[0].Page1[0].f1_09[0]'
     ], formData.accountNumbers);
   }
 
-  // SSN - fill individual digit boxes
+  // SSN - fill individual digit boxes (f1_10 through f1_15 exist - only 6 digits?)
+  // The PDF seems to only have 6 SSN fields, so we'll fill what's available
   if (formData.tinType === 'ssn' && formData.ssn) {
     const ssnDigits = formData.ssn.replace(/\D/g, '');
-    for (let i = 0; i < Math.min(ssnDigits.length, 9); i++) {
-      trySetTextField(form, [
-        `topmostSubform[0].Page1[0].f1_${10 + i}[0]`,
-        `f1_${10 + i}`,
-        `SSN${i + 1}`
-      ], ssnDigits[i]);
+    const ssnFieldNames = [
+      'topmostSubform[0].Page1[0].f1_10[0]',
+      'topmostSubform[0].Page1[0].f1_11[0]',
+      'topmostSubform[0].Page1[0].f1_12[0]',
+      'topmostSubform[0].Page1[0].f1_13[0]',
+      'topmostSubform[0].Page1[0].f1_14[0]',
+      'topmostSubform[0].Page1[0].f1_15[0]'
+    ];
+    for (let i = 0; i < Math.min(ssnDigits.length, ssnFieldNames.length); i++) {
+      trySetTextField(form, [ssnFieldNames[i]], ssnDigits[i]);
     }
   }
 
-  // EIN - fill individual digit boxes
+  // EIN - The PDF might not have separate EIN fields, check if c1_2 is for EIN selection
   if (formData.tinType === 'ein' && formData.ein) {
     const einDigits = formData.ein.replace(/\D/g, '');
-    for (let i = 0; i < Math.min(einDigits.length, 9); i++) {
-      trySetTextField(form, [
-        `topmostSubform[0].Page1[0].f1_${19 + i}[0]`,
-        `f1_${19 + i}`,
-        `EIN${i + 1}`
-      ], einDigits[i]);
+    // Try using same fields as SSN (user might need to select EIN checkbox separately)
+    const einFieldNames = [
+      'topmostSubform[0].Page1[0].f1_10[0]',
+      'topmostSubform[0].Page1[0].f1_11[0]',
+      'topmostSubform[0].Page1[0].f1_12[0]',
+      'topmostSubform[0].Page1[0].f1_13[0]',
+      'topmostSubform[0].Page1[0].f1_14[0]',
+      'topmostSubform[0].Page1[0].f1_15[0]'
+    ];
+    for (let i = 0; i < Math.min(einDigits.length, einFieldNames.length); i++) {
+      trySetTextField(form, [einFieldNames[i]], einDigits[i]);
     }
   }
 
