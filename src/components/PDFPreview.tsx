@@ -139,33 +139,8 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
   return (
     <div className="w9-preview">
       <div className="w9-preview-header">
-        <h2>Preview Your W-9</h2>
-        <p>Please review your completed form before downloading.</p>
-      </div>
-
-      <div className="w9-preview-frame-container">
-        {pdfBlobUrl ? (
-          <embed
-            src={pdfBlobUrl}
-            type="application/pdf"
-            className="w9-preview-frame"
-            title="W9 Preview"
-          />
-        ) : (
-          <div className="w9-preview-placeholder">
-            <p>Loading preview...</p>
-          </div>
-        )}
-      </div>
-
-      {/* Fallback message */}
-      <div className="w9-preview-fallback-message">
-        <p>
-          Can't see the preview? 
-          <button className="w9-link-btn" onClick={handleOpenInNewTab}>
-            Open in new tab
-          </button>
-        </p>
+        <h2>Your W-9 is Ready!</h2>
+        <p>Your W-9 form has been generated successfully.</p>
       </div>
 
       <div className="w9-preview-summary">
@@ -201,6 +176,12 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
           ← Go Back & Edit
         </button>
         <button 
+          className="w9-btn w9-btn-primary"
+          onClick={handleOpenInNewTab}
+        >
+          📄 Review PDF
+        </button>
+        <button 
           className="w9-btn w9-btn-primary w9-btn-download"
           onClick={handleDownload}
           disabled={isDownloading}
@@ -212,7 +193,7 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
             </>
           ) : (
             <>
-              ⬇️ Confirm & Download
+              ⬇️ Download
             </>
           )}
         </button>
