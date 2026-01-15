@@ -135,6 +135,14 @@ export const FormWizard: React.FC = () => {
 
   return (
     <div className="w9-wizard">
+      {/* Logo */}
+      <div className="w9-logo">
+        <img 
+          src="https://assets.cdn.filesafe.space/hX83Iw1k4t1OkxxBWMGa/media/682cd4db7ae79b622bda02e9.png" 
+          alt="CS3 Investments"
+        />
+      </div>
+
       {/* Test Data Button */}
       <div style={{ marginBottom: '16px', textAlign: 'right' }}>
         <button
