@@ -13,6 +13,7 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
   errors
 }) => {
   const isIRA = formData.accountType === 'ira';
+  const isIndividual = formData.accountType === 'individual';
 
   // Format IRA EIN as user types (XX-XXXXXXX)
   const handleIRAEINChange = (value: string) => {
@@ -217,7 +218,30 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
               {errors.iraEin && <span className="w9-error-message">{errors.iraEin}</span>}
             </div>
           </>
+        ) : isIndividual ? (
+          // Individual: SSN only, no toggle
+          <>
+            <p className="w9-help-text">
+              Enter your Social Security Number.
+            </p>
+            <div className="w9-form-group">
+              <label htmlFor="ssn" className="w9-label">
+                Social Security Number <span className="w9-required">*</span>
+              </label>
+              <input
+                type="text"
+                id="ssn"
+                className={`w9-input w9-input-tin ${errors.ssn ? 'w9-input-error' : ''}`}
+                value={formData.ssn}
+                onChange={(e) => handleSSNChange(e.target.value)}
+                placeholder="XXX-XX-XXXX"
+                maxLength={11}
+              />
+              {errors.ssn && <span className="w9-error-message">{errors.ssn}</span>}
+            </div>
+          </>
         ) : (
+          // Other account types: show SSN/EIN toggle
           <>
             <p className="w9-help-text">
               Enter your TIN. For individuals, this is your Social Security Number (SSN).
@@ -280,24 +304,26 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
         )}
       </div>
 
-      {/* Optional Fields */}
-      <div className="w9-section w9-section-optional">
-        <h3 className="w9-section-title">Optional Information</h3>
-        
-        <div className="w9-form-group">
-          <label htmlFor="accountNumbers" className="w9-label">
-            Account Number(s)
-          </label>
-          <input
-            type="text"
-            id="accountNumbers"
-            className="w9-input"
-            value={formData.accountNumbers}
-            onChange={(e) => updateFormData({ accountNumbers: e.target.value })}
-            placeholder="Optional - for requester's use"
-          />
+      {/* Optional Fields - hide for Individual and IRA accounts */}
+      {!isIndividual && !isIRA && (
+        <div className="w9-section w9-section-optional">
+          <h3 className="w9-section-title">Optional Information</h3>
+          
+          <div className="w9-form-group">
+            <label htmlFor="accountNumbers" className="w9-label">
+              Account Number(s)
+            </label>
+            <input
+              type="text"
+              id="accountNumbers"
+              className="w9-input"
+              value={formData.accountNumbers}
+              onChange={(e) => updateFormData({ accountNumbers: e.target.value })}
+              placeholder="Optional - for requester's use"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
