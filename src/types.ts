@@ -285,8 +285,15 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
       break;
       
     case 2:
-      if (!data.name.trim()) {
-        errors.name = 'Name is required';
+      // For trusts, only businessName (trust name) is required
+      if (data.accountType === 'trust') {
+        if (!data.businessName.trim()) {
+          errors.businessName = 'Trust name is required';
+        }
+      } else {
+        if (!data.name.trim()) {
+          errors.name = 'Name is required';
+        }
       }
       break;
       
