@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import { W9FormData } from '../types';
-import { generateFilledW9PDF, downloadPDF, createPDFPreviewURL } from '../services/pdfService';
+import { generateFilledW9PDF, downloadPDF } from '../services/pdfService';
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface PDFPreviewProps {
   formData: W9FormData;
@@ -15,21 +19,16 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
   isGenerating,
   setIsGenerating
 }) => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
+  const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadComplete, setDownloadComplete] = useState(false);
 
   useEffect(() => {
     generatePreview();
-    
-    // Cleanup preview URL on unmount
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
   }, []);
 
   const generatePreview = async () => {
@@ -42,15 +41,30 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
       console.log('PDF generated, size:', bytes.length, 'bytes');
       setPdfBytes(bytes);
       
-      const url = createPDFPreviewURL(bytes);
-      console.log('Preview URL created:', url);
-      setPreviewUrl(url);
+      // Convert to data URL for react-pdf
+      const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPdfDataUrl(reader.result as string);
+        console.log('PDF data URL created');
+      };
+      reader.readAsDataURL(blob);
     } catch (err) {
       console.error('Failed to generate PDF:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate PDF. Please try again.');
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    console.log('PDF loaded successfully, pages:', numPages);
+  };
+
+  const onDocumentLoadError = (error: Error) => {
+    console.error('Error loading PDF:', error);
+    setError('Failed to load PDF preview. You can still download the document.');
   };
 
   const handleDownload = () => {
@@ -137,21 +151,47 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
       </div>
 
       <div className="w9-preview-frame-container">
-        {previewUrl ? (
-          <object
-            data={previewUrl}
-            type="application/pdf"
-            className="w9-preview-frame"
-            aria-label="W9 PDF Preview"
-          >
-            <div className="w9-preview-fallback">
-              <p>PDF preview is not available in your browser.</p>
-              <p>Please download the document to view it.</p>
-            </div>
-          </object>
+        {pdfDataUrl ? (
+          <>
+            <Document
+              file={pdfDataUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              className="w9-pdf-document"
+            >
+              <Page
+                pageNumber={pageNumber}
+                className="w9-pdf-page"
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                width={650}
+              />
+            </Document>
+            {numPages && numPages > 1 && (
+              <div className="w9-pdf-controls">
+                <button
+                  className="w9-pdf-nav-btn"
+                  onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
+                  disabled={pageNumber <= 1}
+                >
+                  ← Previous
+                </button>
+                <span className="w9-pdf-page-info">
+                  Page {pageNumber} of {numPages}
+                </span>
+                <button
+                  className="w9-pdf-nav-btn"
+                  onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
+                  disabled={pageNumber >= numPages}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="w9-preview-placeholder">
-            <p>Preview loading...</p>
+            <p>Loading preview...</p>
           </div>
         )}
       </div>

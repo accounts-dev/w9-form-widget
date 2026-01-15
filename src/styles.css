@@ -535,6 +535,63 @@
   border-radius: var(--w9-border-radius);
   overflow: hidden;
   margin-bottom: 24px;
+  background: #f8fafc;
+}
+
+.w9-pdf-document {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: #525659;
+}
+
+.w9-pdf-page {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background: white;
+}
+
+.w9-pdf-page canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+}
+
+.w9-pdf-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-top: 1px solid var(--w9-border-color);
+}
+
+.w9-pdf-nav-btn {
+  padding: 8px 16px;
+  background: var(--w9-primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--w9-font-family);
+}
+
+.w9-pdf-nav-btn:hover:not(:disabled) {
+  background: var(--w9-primary-hover);
+}
+
+.w9-pdf-nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.w9-pdf-page-info {
+  font-size: 14px;
+  color: var(--w9-text-color);
+  font-weight: 500;
 }
 
 .w9-preview-frame {
