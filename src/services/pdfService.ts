@@ -193,8 +193,8 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
 
   // ============================================
   // SIGNATURE & DATE
-  // The "Sign Here" section is at the very bottom of Page 1
-  // We'll create new form fields for signature and date
+  // The "Sign Here" section is ABOVE the "General Instructions" section
+  // It's in the middle-lower area of page 1, not at the very bottom
   // ============================================
   const pages = pdfDoc.getPages();
   const firstPage = pages[0];
@@ -203,20 +203,18 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   
   console.log(`PDF dimensions: ${width} x ${height}`);
   
-  // The W9 form is typically 792 points tall (US Letter)
-  // The "Sign Here" signature line is at approximately Y=52 from bottom on page 1
-  // Looking at the form structure:
-  // - "Signature of U.S. person" label is on the left
-  // - "Date" label is on the right
-  // The signature field area: x=70 to x=370, y=48 to y=62 (from bottom)
-  // The date field area: x=445 to x=540, y=48 to y=62 (from bottom)
+  // The W9 form page 1 is typically 792 points tall (US Letter)
+  // The "Sign Here" row is approximately:
+  // - About 230 points from the bottom (above General Instructions)
+  // - Signature area starts around x=70
+  // - Date field is around x=415
   
   const signatureFieldX = 70;
-  const signatureFieldY = 48; // from bottom
+  const signatureFieldY = 228; // from bottom - above General Instructions
   const signatureFieldWidth = 300;
   
-  const dateFieldX = 445;
-  const dateFieldY = 48;
+  const dateFieldX = 418;
+  const dateFieldY = 228;
 
   if (formData.signature) {
     if (formData.signatureType === 'drawn') {
