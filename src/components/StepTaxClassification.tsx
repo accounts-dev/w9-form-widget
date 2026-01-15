@@ -18,7 +18,12 @@ export const StepTaxClassification: React.FC<StepTaxClassificationProps> = ({
   updateFormData,
   errors
 }) => {
+  const isIRA = formData.accountType === 'ira';
+
   const handleTaxClassificationChange = (value: TaxClassification) => {
+    // Don't allow changes for IRA accounts
+    if (isIRA) return;
+    
     const updates: Partial<W9FormData> = { taxClassification: value };
     
     // Clear conditional fields when switching
@@ -34,6 +39,18 @@ export const StepTaxClassification: React.FC<StepTaxClassificationProps> = ({
 
   return (
     <div className="w9-step">
+      {isIRA && (
+        <div className="w9-info-message" style={{ 
+          background: 'rgba(247, 161, 26, 0.05)', 
+          border: '1px solid rgba(247, 161, 26, 0.2)',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '20px'
+        }}>
+          <strong>IRA Account:</strong> Tax classification is automatically set to "Other - IRA" for IRA accounts.
+        </div>
+      )}
+      
       <div className="w9-form-group">
         <label className="w9-label">
           Federal Tax Classification <span className="w9-required">*</span>
@@ -52,6 +69,7 @@ export const StepTaxClassification: React.FC<StepTaxClassificationProps> = ({
                 checked={formData.taxClassification === option.value}
                 onChange={() => handleTaxClassificationChange(option.value)}
                 className="w9-radio"
+                disabled={isIRA}
               />
               <span className="w9-radio-text">{option.label}</span>
             </label>
@@ -112,6 +130,8 @@ export const StepTaxClassification: React.FC<StepTaxClassificationProps> = ({
             value={formData.otherDescription}
             onChange={(e) => updateFormData({ otherDescription: e.target.value })}
             placeholder="Enter entity type"
+            disabled={isIRA}
+            readOnly={isIRA}
           />
           {errors.otherDescription && (
             <span className="w9-error-message">{errors.otherDescription}</span>

@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { W9FormData } from '../types';
+import { W9FormData, custodianData } from '../types';
 
 // W9 PDF template URL
 const W9_PDF_URL = './W9 Form Empty (1).pdf';
@@ -83,15 +83,33 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   // Field names from actual W9 PDF (March 2024 revision)
   // ============================================
 
-  // Line 1: Name
-  if (formData.name) {
+  // IRA Account Handling
+  const isIRA = formData.accountType === 'ira';
+  
+  // Line 1: Name (for IRA: custodian name)
+  if (isIRA && formData.custodian) {
+    let custodianName = '';
+    if (formData.custodian === 'other') {
+      custodianName = formData.custodianName;
+    } else {
+      custodianName = custodianData[formData.custodian].name;
+    }
+    trySetTextField(form, [
+      'topmostSubform[0].Page1[0].f1_01[0]'
+    ], custodianName);
+  } else if (formData.name) {
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].f1_01[0]'
     ], formData.name);
   }
 
-  // Line 2: Business name
-  if (formData.businessName) {
+  // Line 2: Business name (for IRA: "FBO [Investor Name]")
+  if (isIRA && formData.name) {
+    const fboName = `FBO ${formData.name}`;
+    trySetTextField(form, [
+      'topmostSubform[0].Page1[0].f1_02[0]'
+    ], fboName);
+  } else if (formData.businessName) {
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].f1_02[0]'
     ], formData.businessName);
@@ -140,23 +158,55 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
     ], formData.fatcaExemptionCode);
   }
 
-  // Line 5: Address
-  if (formData.address) {
+  // Line 5: Address (for IRA: custodian address)
+  if (isIRA && formData.custodian) {
+    let address = '';
+    if (formData.custodian === 'other') {
+      address = formData.custodianAddress;
+    } else {
+      address = custodianData[formData.custodian].address;
+    }
+    trySetTextField(form, [
+      'topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]'
+    ], address);
+  } else if (formData.address) {
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]'
     ], formData.address);
   }
 
-  // Line 6: City, State, ZIP
-  const cityStateZip = [formData.city, formData.state, formData.zipCode].filter(Boolean).join(', ');
-  if (cityStateZip) {
+  // Line 6: City, State, ZIP (for IRA: custodian city/state/zip)
+  if (isIRA && formData.custodian) {
+    let city = '', state = '', zip = '';
+    if (formData.custodian === 'other') {
+      city = formData.custodianCity;
+      state = formData.custodianState;
+      zip = formData.custodianZip;
+    } else {
+      const data = custodianData[formData.custodian];
+      city = data.city;
+      state = data.state;
+      zip = data.zip;
+    }
+    const cityStateZip = [city, state, zip].filter(Boolean).join(', ');
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]'
     ], cityStateZip);
+  } else {
+    const cityStateZip = [formData.city, formData.state, formData.zipCode].filter(Boolean).join(', ');
+    if (cityStateZip) {
+      trySetTextField(form, [
+        'topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]'
+      ], cityStateZip);
+    }
   }
 
-  // Line 7: Account numbers (optional)
-  if (formData.accountNumbers) {
+  // Line 7: Account numbers (for IRA: include IRA account number)
+  if (isIRA && formData.iraAccountNumber) {
+    trySetTextField(form, [
+      'topmostSubform[0].Page1[0].f1_09[0]'
+    ], `IRA: ${formData.iraAccountNumber}`);
+  } else if (formData.accountNumbers) {
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].f1_09[0]'
     ], formData.accountNumbers);
@@ -164,6 +214,7 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
 
   // ============================================
   // SSN/EIN - The PDF uses GROUPED fields, not individual digit boxes
+  // For IRA accounts, use IRA EIN instead of personal SSN
   // f1_10 = Requester's name (skip for TIN)
   // f1_11 = SSN first 3 digits (XXX)
   // f1_12 = SSN middle 2 digits (XX)
@@ -172,7 +223,14 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   // f1_15 = EIN last 7 digits (XXXXXXX)
   // ============================================
   
-  if (formData.tinType === 'ssn' && formData.ssn) {
+  if (isIRA && formData.iraEin) {
+    // For IRA accounts, use IRA EIN (always in EIN format)
+    const einDigits = formData.iraEin.replace(/\D/g, '');
+    if (einDigits.length >= 9) {
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_14[0]'], einDigits.substring(0, 2));
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_15[0]'], einDigits.substring(2, 9));
+    }
+  } else if (formData.tinType === 'ssn' && formData.ssn) {
     const ssnDigits = formData.ssn.replace(/\D/g, '');
     if (ssnDigits.length >= 9) {
       // SSN format: XXX-XX-XXXX
@@ -180,9 +238,7 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
       trySetTextField(form, ['topmostSubform[0].Page1[0].f1_12[0]'], ssnDigits.substring(3, 5));
       trySetTextField(form, ['topmostSubform[0].Page1[0].f1_13[0]'], ssnDigits.substring(5, 9));
     }
-  }
-
-  if (formData.tinType === 'ein' && formData.ein) {
+  } else if (formData.tinType === 'ein' && formData.ein) {
     const einDigits = formData.ein.replace(/\D/g, '');
     if (einDigits.length >= 9) {
       // EIN format: XX-XXXXXXX

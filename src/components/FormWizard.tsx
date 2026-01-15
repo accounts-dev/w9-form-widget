@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   W9FormData, 
   initialFormData, 
@@ -6,6 +6,8 @@ import {
   validateStep,
   ValidationErrors 
 } from '../types';
+import { StepAccountType } from './StepAccountType';
+import { StepCustodian } from './StepCustodian';
 import { StepIdentity } from './StepIdentity';
 import { StepTaxClassification } from './StepTaxClassification';
 import { StepAddressTIN } from './StepAddressTIN';
@@ -13,11 +15,22 @@ import { StepSignature } from './StepSignature';
 import { PDFPreview } from './PDFPreview';
 
 export const FormWizard: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<W9FormData>(initialFormData);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [showPreview, setShowPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Auto-set tax classification for IRA accounts
+  useEffect(() => {
+    if (formData.accountType === 'ira') {
+      setFormData(prev => ({
+        ...prev,
+        taxClassification: 'other',
+        otherDescription: 'IRA'
+      }));
+    }
+  }, [formData.accountType]);
 
   const updateFormData = (updates: Partial<W9FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -30,14 +43,27 @@ export const FormWizard: React.FC = () => {
     });
   };
 
+  const onChange = (field: keyof W9FormData, value: any) => {
+    updateFormData({ [field]: value });
+  };
+
   // Fill with test data (for development/testing)
   const fillTestData = () => {
     setFormData({
+      accountType: 'ira',
+      custodian: 'equity-trust',
+      custodianName: 'Equity Trust Company',
+      custodianAddress: '1 Equity Way',
+      custodianCity: 'Westlake',
+      custodianState: 'OH',
+      custodianZip: '44145',
+      iraAccountNumber: 'IRA123456789',
+      iraEin: '12-3456789',
       name: 'John A. Doe',
-      businessName: 'Acme Corporation',
-      taxClassification: 'individual',
+      businessName: '',
+      taxClassification: 'other',
       llcClassification: null,
-      otherDescription: '',
+      otherDescription: 'IRA',
       exemptPayeeCode: '',
       fatcaExemptionCode: '',
       address: '123 Main Street',
@@ -47,7 +73,7 @@ export const FormWizard: React.FC = () => {
       requesterNameAddress: '',
       accountNumbers: '',
       tinType: 'ssn',
-      ssn: '123-45-6789',
+      ssn: '',
       ein: '',
       signature: 'John A. Doe',
       signatureType: 'typed',
@@ -56,14 +82,36 @@ export const FormWizard: React.FC = () => {
     setErrors({});
   };
 
+  // Get the visible steps based on account type
+  const getVisibleSteps = () => {
+    const steps = [formSteps[0]]; // Account Type is always visible
+    
+    if (formData.accountType === 'ira') {
+      steps.push(formSteps[1]); // Custodian
+    }
+    
+    // Add remaining steps (Identity, Tax Classification, Address/TIN, Signature)
+    steps.push(formSteps[2], formSteps[3], formSteps[4], formSteps[5]);
+    
+    return steps;
+  };
+
+  // Map current position to actual step ID
+  const getStepId = () => {
+    const visibleSteps = getVisibleSteps();
+    return visibleSteps[currentStep]?.id || 0;
+  };
+
   const handleNext = () => {
-    const stepErrors = validateStep(currentStep, formData);
+    const stepId = getStepId();
+    const stepErrors = validateStep(stepId, formData);
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
       return;
     }
     
-    if (currentStep < 4) {
+    const visibleSteps = getVisibleSteps();
+    if (currentStep < visibleSteps.length - 1) {
       setCurrentStep(prev => prev + 1);
       setErrors({});
     } else {
@@ -73,7 +121,7 @@ export const FormWizard: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
       setErrors({});
     }
@@ -84,8 +132,26 @@ export const FormWizard: React.FC = () => {
   };
 
   const renderStep = () => {
-    switch (currentStep) {
+    const stepId = getStepId();
+    
+    switch (stepId) {
+      case 0:
+        return (
+          <StepAccountType
+            formData={formData}
+            errors={errors}
+            onChange={onChange}
+          />
+        );
       case 1:
+        return (
+          <StepCustodian
+            formData={formData}
+            errors={errors}
+            onChange={onChange}
+          />
+        );
+      case 2:
         return (
           <StepIdentity
             formData={formData}
@@ -93,7 +159,7 @@ export const FormWizard: React.FC = () => {
             errors={errors}
           />
         );
-      case 2:
+      case 3:
         return (
           <StepTaxClassification
             formData={formData}
@@ -101,7 +167,7 @@ export const FormWizard: React.FC = () => {
             errors={errors}
           />
         );
-      case 3:
+      case 4:
         return (
           <StepAddressTIN
             formData={formData}
@@ -109,7 +175,7 @@ export const FormWizard: React.FC = () => {
             errors={errors}
           />
         );
-      case 4:
+      case 5:
         return (
           <StepSignature
             formData={formData}
@@ -157,19 +223,19 @@ export const FormWizard: React.FC = () => {
 
       {/* Progress Steps */}
       <div className="w9-progress">
-        {formSteps.map((step) => (
+        {getVisibleSteps().map((step, index) => (
           <div
             key={step.id}
             className={`w9-progress-step ${
-              step.id === currentStep
+              index === currentStep
                 ? 'active'
-                : step.id < currentStep
+                : index < currentStep
                 ? 'completed'
                 : ''
             }`}
           >
             <div className="w9-progress-number">
-              {step.id < currentStep ? '✓' : step.id}
+              {index < currentStep ? '✓' : index + 1}
             </div>
             <div className="w9-progress-label">{step.title}</div>
           </div>
@@ -179,10 +245,10 @@ export const FormWizard: React.FC = () => {
       {/* Step Header */}
       <div className="w9-step-header">
         <h2 className="w9-step-title">
-          Step {currentStep}: {formSteps[currentStep - 1].title}
+          Step {currentStep + 1}: {getVisibleSteps()[currentStep].title}
         </h2>
         <p className="w9-step-description">
-          {formSteps[currentStep - 1].description}
+          {getVisibleSteps()[currentStep].description}
         </p>
       </div>
 
@@ -197,7 +263,7 @@ export const FormWizard: React.FC = () => {
           type="button"
           className="w9-btn w9-btn-secondary"
           onClick={handleBack}
-          disabled={currentStep === 1}
+          disabled={currentStep === 0}
         >
           ← Back
         </button>
@@ -206,7 +272,7 @@ export const FormWizard: React.FC = () => {
           className="w9-btn w9-btn-primary"
           onClick={handleNext}
         >
-          {currentStep === 4 ? 'Preview Document →' : 'Next →'}
+          {currentStep === getVisibleSteps().length - 1 ? 'Preview Document →' : 'Next →'}
         </button>
       </div>
     </div>

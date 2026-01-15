@@ -1,5 +1,19 @@
 // W9 Form Data Types
 
+export type AccountType = 
+  | 'individual'
+  | 'ira'
+  | 'trust'
+  | 'llc'
+  | 'corporation'
+  | '401k';
+
+export type Custodian =
+  | 'equity-trust'
+  | 'ira-innovations'
+  | 'ira-financial'
+  | 'other';
+
 export type TaxClassification = 
   | 'individual'
   | 'cCorporation'
@@ -14,6 +28,19 @@ export type LLCClassification = 'C' | 'S' | 'P';
 export type TINType = 'ssn' | 'ein';
 
 export interface W9FormData {
+  // Section 0: Account Type (new for IRA support)
+  accountType: AccountType | null;
+  
+  // IRA-specific fields
+  custodian: Custodian | null;
+  custodianName: string; // For "other" custodian
+  custodianAddress: string;
+  custodianCity: string;
+  custodianState: string;
+  custodianZip: string;
+  iraAccountNumber: string;
+  iraEin: string;
+  
   // Section 1: Identity
   name: string;
   businessName: string;
@@ -48,7 +75,45 @@ export interface W9FormData {
   signatureDate: string;
 }
 
+// Custodian data
+export const custodianData: Record<Exclude<Custodian, 'other'>, { name: string; address: string; city: string; state: string; zip: string }> = {
+  'equity-trust': {
+    name: 'Equity Trust Company',
+    address: '1 Equity Way',
+    city: 'Westlake',
+    state: 'OH',
+    zip: '44145'
+  },
+  'ira-innovations': {
+    name: 'IRA Innovations',
+    address: '4905 Pine Cone Dr Ste 2',
+    city: 'Durham',
+    state: 'NC',
+    zip: '27707'
+  },
+  'ira-financial': {
+    name: 'IRA Financial Trust Company',
+    address: '1691 Michigan Ave Ste 305',
+    city: 'Miami Beach',
+    state: 'FL',
+    zip: '33139'
+  }
+};
+
 export const initialFormData: W9FormData = {
+  // Account Type
+  accountType: null,
+  
+  // IRA fields
+  custodian: null,
+  custodianName: '',
+  custodianAddress: '',
+  custodianCity: '',
+  custodianState: '',
+  custodianZip: '',
+  iraAccountNumber: '',
+  iraEin: '',
+  
   name: '',
   businessName: '',
   taxClassification: null,
@@ -79,22 +144,32 @@ export interface FormStep {
 
 export const formSteps: FormStep[] = [
   {
+    id: 0,
+    title: 'Account Type',
+    description: 'Select your account type'
+  },
+  {
     id: 1,
+    title: 'Custodian',
+    description: 'Select your IRA custodian'
+  },
+  {
+    id: 2,
     title: 'Identity',
     description: 'Enter your name and business information'
   },
   {
-    id: 2,
+    id: 3,
     title: 'Tax Classification',
     description: 'Select your federal tax classification'
   },
   {
-    id: 3,
+    id: 4,
     title: 'Address & TIN',
     description: 'Enter your address and taxpayer identification number'
   },
   {
-    id: 4,
+    id: 5,
     title: 'Signature',
     description: 'Sign and certify your information'
   }
@@ -175,13 +250,47 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
   const errors: ValidationErrors = {};
   
   switch (step) {
+    case 0:
+      if (!data.accountType) {
+        errors.accountType = 'Account type is required';
+      }
+      break;
+      
     case 1:
+      if (data.accountType === 'ira') {
+        if (!data.custodian) {
+          errors.custodian = 'Custodian selection is required';
+        }
+        if (data.custodian === 'other') {
+          if (!data.custodianName.trim()) {
+            errors.custodianName = 'Custodian name is required';
+          }
+          if (!data.custodianAddress.trim()) {
+            errors.custodianAddress = 'Address is required';
+          }
+          if (!data.custodianCity.trim()) {
+            errors.custodianCity = 'City is required';
+          }
+          if (!data.custodianState) {
+            errors.custodianState = 'State is required';
+          }
+          if (!data.custodianZip.trim()) {
+            errors.custodianZip = 'ZIP code is required';
+          }
+        }
+        if (!data.iraAccountNumber.trim()) {
+          errors.iraAccountNumber = 'IRA account number is required';
+        }
+      }
+      break;
+      
+    case 2:
       if (!data.name.trim()) {
         errors.name = 'Name is required';
       }
       break;
       
-    case 2:
+    case 3:
       if (!data.taxClassification) {
         errors.taxClassification = 'Tax classification is required';
       }
@@ -193,7 +302,7 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
       }
       break;
       
-    case 3:
+    case 4:
       if (!data.address.trim()) {
         errors.address = 'Address is required';
       }
@@ -209,22 +318,31 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
         errors.zipCode = 'Invalid ZIP code format';
       }
       
-      if (data.tinType === 'ssn') {
-        if (!data.ssn.trim()) {
-          errors.ssn = 'Social Security Number is required';
-        } else if (!/^\d{3}-?\d{2}-?\d{4}$/.test(data.ssn.replace(/\s/g, ''))) {
-          errors.ssn = 'Invalid SSN format (XXX-XX-XXXX)';
+      // TIN validation - different for IRA vs non-IRA
+      if (data.accountType === 'ira') {
+        if (!data.iraEin.trim()) {
+          errors.iraEin = 'IRA EIN is required';
+        } else if (!/^\d{2}-?\d{7}$/.test(data.iraEin.replace(/\s/g, ''))) {
+          errors.iraEin = 'Invalid EIN format (XX-XXXXXXX)';
         }
       } else {
-        if (!data.ein.trim()) {
-          errors.ein = 'Employer Identification Number is required';
-        } else if (!/^\d{2}-?\d{7}$/.test(data.ein.replace(/\s/g, ''))) {
-          errors.ein = 'Invalid EIN format (XX-XXXXXXX)';
+        if (data.tinType === 'ssn') {
+          if (!data.ssn.trim()) {
+            errors.ssn = 'Social Security Number is required';
+          } else if (!/^\d{3}-?\d{2}-?\d{4}$/.test(data.ssn.replace(/\s/g, ''))) {
+            errors.ssn = 'Invalid SSN format (XXX-XX-XXXX)';
+          }
+        } else {
+          if (!data.ein.trim()) {
+            errors.ein = 'Employer Identification Number is required';
+          } else if (!/^\d{2}-?\d{7}$/.test(data.ein.replace(/\s/g, ''))) {
+            errors.ein = 'Invalid EIN format (XX-XXXXXXX)';
+          }
         }
       }
       break;
       
-    case 4:
+    case 5:
       if (!data.signature) {
         errors.signature = 'Signature is required';
       }
