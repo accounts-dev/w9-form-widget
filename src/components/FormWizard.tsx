@@ -30,6 +30,32 @@ export const FormWizard: React.FC = () => {
     });
   };
 
+  // Fill with test data (for development/testing)
+  const fillTestData = () => {
+    setFormData({
+      name: 'John A. Doe',
+      businessName: 'Acme Corporation',
+      taxClassification: 'individual',
+      llcClassification: null,
+      otherDescription: '',
+      exemptPayeeCode: '',
+      fatcaExemptionCode: '',
+      address: '123 Main Street',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10001',
+      requesterNameAddress: '',
+      accountNumbers: '',
+      tinType: 'ssn',
+      ssn: '123-45-6789',
+      ein: '',
+      signature: 'John A. Doe',
+      signatureType: 'typed',
+      signatureDate: new Date().toLocaleDateString('en-US')
+    });
+    setErrors({});
+  };
+
   const handleNext = () => {
     const stepErrors = validateStep(currentStep, formData);
     if (Object.keys(stepErrors).length > 0) {
@@ -109,6 +135,18 @@ export const FormWizard: React.FC = () => {
 
   return (
     <div className="w9-wizard">
+      {/* Test Data Button */}
+      <div style={{ marginBottom: '16px', textAlign: 'right' }}>
+        <button
+          type="button"
+          className="w9-btn-test-data"
+          onClick={fillTestData}
+          title="Fill form with test data"
+        >
+          🧪 Fill Test Data
+        </button>
+      </div>
+
       {/* Progress Steps */}
       <div className="w9-progress">
         {formSteps.map((step) => (

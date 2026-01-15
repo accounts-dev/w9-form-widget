@@ -489,6 +489,25 @@
   background: #f8fafc;
 }
 
+/* Test Data Button (for development) */
+.w9-btn-test-data {
+  padding: 6px 12px;
+  font-size: 13px;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  font-family: var(--w9-font-family);
+}
+
+.w9-btn-test-data:hover {
+  background: #dcfce7;
+  border-color: #4ade80;
+}
+
 /* ============================================
    Preview Component
    ============================================ */
