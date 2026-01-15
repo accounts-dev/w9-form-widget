@@ -162,45 +162,39 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
     ], formData.accountNumbers);
   }
 
-  // SSN - fill individual digit boxes (f1_10 through f1_15 exist - only 6 digits?)
-  // The PDF seems to only have 6 SSN fields, so we'll fill what's available
+  // ============================================
+  // SSN/EIN - The PDF uses GROUPED fields, not individual digit boxes
+  // f1_10 = Requester's name (skip for TIN)
+  // f1_11 = SSN first 3 digits (XXX)
+  // f1_12 = SSN middle 2 digits (XX)
+  // f1_13 = SSN last 4 digits (XXXX)
+  // f1_14 = EIN first 2 digits (XX)
+  // f1_15 = EIN last 7 digits (XXXXXXX)
+  // ============================================
+  
   if (formData.tinType === 'ssn' && formData.ssn) {
     const ssnDigits = formData.ssn.replace(/\D/g, '');
-    const ssnFieldNames = [
-      'topmostSubform[0].Page1[0].f1_10[0]',
-      'topmostSubform[0].Page1[0].f1_11[0]',
-      'topmostSubform[0].Page1[0].f1_12[0]',
-      'topmostSubform[0].Page1[0].f1_13[0]',
-      'topmostSubform[0].Page1[0].f1_14[0]',
-      'topmostSubform[0].Page1[0].f1_15[0]'
-    ];
-    for (let i = 0; i < Math.min(ssnDigits.length, ssnFieldNames.length); i++) {
-      trySetTextField(form, [ssnFieldNames[i]], ssnDigits[i]);
+    if (ssnDigits.length >= 9) {
+      // SSN format: XXX-XX-XXXX
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_11[0]'], ssnDigits.substring(0, 3));
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_12[0]'], ssnDigits.substring(3, 5));
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_13[0]'], ssnDigits.substring(5, 9));
     }
   }
 
-  // EIN - The PDF might not have separate EIN fields, check if c1_2 is for EIN selection
   if (formData.tinType === 'ein' && formData.ein) {
     const einDigits = formData.ein.replace(/\D/g, '');
-    // Try using same fields as SSN (user might need to select EIN checkbox separately)
-    const einFieldNames = [
-      'topmostSubform[0].Page1[0].f1_10[0]',
-      'topmostSubform[0].Page1[0].f1_11[0]',
-      'topmostSubform[0].Page1[0].f1_12[0]',
-      'topmostSubform[0].Page1[0].f1_13[0]',
-      'topmostSubform[0].Page1[0].f1_14[0]',
-      'topmostSubform[0].Page1[0].f1_15[0]'
-    ];
-    for (let i = 0; i < Math.min(einDigits.length, einFieldNames.length); i++) {
-      trySetTextField(form, [einFieldNames[i]], einDigits[i]);
+    if (einDigits.length >= 9) {
+      // EIN format: XX-XXXXXXX
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_14[0]'], einDigits.substring(0, 2));
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_15[0]'], einDigits.substring(2, 9));
     }
   }
 
   // ============================================
-  // SIGNATURE & DATE (no form fields - use coordinate placement)
-  // The "Sign Here" section is at the bottom of the W9 form
-  // W9 PDF is typically 792 points tall (11 inches)
-  // Signature line is approximately at Y=55 from bottom
+  // SIGNATURE & DATE
+  // The "Sign Here" section is at the very bottom of Page 1
+  // We'll create new form fields for signature and date
   // ============================================
   const pages = pdfDoc.getPages();
   const firstPage = pages[0];
@@ -209,10 +203,20 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   
   console.log(`PDF dimensions: ${width} x ${height}`);
   
-  // Signature area: "Signature of U.S. person" is on the left
-  // The signature line starts around x=75 and the date field is on the right around x=465
-  const signatureY = 55; // Distance from BOTTOM of page
-  const dateY = 55;
+  // The W9 form is typically 792 points tall (US Letter)
+  // The "Sign Here" signature line is at approximately Y=52 from bottom on page 1
+  // Looking at the form structure:
+  // - "Signature of U.S. person" label is on the left
+  // - "Date" label is on the right
+  // The signature field area: x=70 to x=370, y=48 to y=62 (from bottom)
+  // The date field area: x=445 to x=540, y=48 to y=62 (from bottom)
+  
+  const signatureFieldX = 70;
+  const signatureFieldY = 48; // from bottom
+  const signatureFieldWidth = 300;
+  
+  const dateFieldX = 445;
+  const dateFieldY = 48;
 
   if (formData.signature) {
     if (formData.signatureType === 'drawn') {
@@ -221,45 +225,54 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
         const signatureBytes = Uint8Array.from(atob(signatureData), c => c.charCodeAt(0));
         const signatureImage = await pdfDoc.embedPng(signatureBytes);
         
-        // Scale signature to fit nicely above the line
-        const sigWidth = 180;
-        const sigHeight = (signatureImage.height / signatureImage.width) * sigWidth;
-        const cappedHeight = Math.min(sigHeight, 25); // Cap height to fit
+        // Scale signature to fit the signature area
+        const maxWidth = signatureFieldWidth;
+        const maxHeight = 20;
+        const aspectRatio = signatureImage.width / signatureImage.height;
+        
+        let sigWidth = maxWidth;
+        let sigHeight = sigWidth / aspectRatio;
+        
+        if (sigHeight > maxHeight) {
+          sigHeight = maxHeight;
+          sigWidth = sigHeight * aspectRatio;
+        }
         
         firstPage.drawImage(signatureImage, {
-          x: 75,
-          y: signatureY + 2, // Slightly above the signature line
+          x: signatureFieldX,
+          y: signatureFieldY,
           width: sigWidth,
-          height: cappedHeight,
+          height: sigHeight,
         });
-        console.log(`Drew signature image at x=75, y=${signatureY + 2}`);
+        console.log(`Drew signature image at x=${signatureFieldX}, y=${signatureFieldY}, size=${sigWidth}x${sigHeight}`);
       } catch (error) {
         console.error('Failed to embed signature image:', error);
       }
     } else {
-      // Typed signature - place text on the signature line
+      // Typed signature - create a text field or draw text
+      // Use a slightly script-like appearance
       firstPage.drawText(formData.signature, {
-        x: 75,
-        y: signatureY + 5,
-        size: 11,
+        x: signatureFieldX,
+        y: signatureFieldY + 3,
+        size: 12,
         font: helvetica,
         color: rgb(0, 0, 0),
       });
-      console.log(`Drew typed signature at x=75, y=${signatureY + 5}`);
+      console.log(`Drew typed signature at x=${signatureFieldX}, y=${signatureFieldY + 3}`);
     }
   }
 
-  // Date field is to the right of the signature
+  // Date field
   if (formData.signatureDate) {
     const dateStr = new Date(formData.signatureDate).toLocaleDateString('en-US');
     firstPage.drawText(dateStr, {
-      x: 465,
-      y: dateY + 5,
+      x: dateFieldX,
+      y: dateFieldY + 3,
       size: 10,
       font: helvetica,
       color: rgb(0, 0, 0),
     });
-    console.log(`Drew date "${dateStr}" at x=465, y=${dateY + 5}`);
+    console.log(`Drew date "${dateStr}" at x=${dateFieldX}, y=${dateFieldY + 3}`);
   }
 
   // Optionally flatten the form to prevent further editing
