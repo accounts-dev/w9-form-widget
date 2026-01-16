@@ -14,6 +14,7 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
 }) => {
   const isIRA = formData.accountType === 'ira';
   const isIndividual = formData.accountType === 'individual';
+  const isTrust = formData.accountType === 'trust';
 
   // Format IRA EIN as user types (XX-XXXXXXX)
   const handleIRAEINChange = (value: string) => {
@@ -207,6 +208,66 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
               {errors.ssn && <span className="w9-error-message">{errors.ssn}</span>}
             </div>
           </>
+        ) : isTrust ? (
+          // Trust: Ask if trust has EIN or uses investor's SSN
+          <>
+            <p className="w9-help-text">
+              Does the trust have its own EIN, or does it use the investor's Social Security Number?
+            </p>
+
+            <div className="w9-form-group">
+              <div className="w9-tin-toggle">
+                <button
+                  type="button"
+                  className={`w9-tin-toggle-btn ${formData.tinType === 'ein' ? 'active' : ''}`}
+                  onClick={() => updateFormData({ tinType: 'ein' as TINType, ssn: '' })}
+                >
+                  Trust EIN
+                </button>
+                <button
+                  type="button"
+                  className={`w9-tin-toggle-btn ${formData.tinType === 'ssn' ? 'active' : ''}`}
+                  onClick={() => updateFormData({ tinType: 'ssn' as TINType, ein: '' })}
+                >
+                  Investor's SSN
+                </button>
+              </div>
+            </div>
+
+            {formData.tinType === 'ein' ? (
+              <div className="w9-form-group">
+                <label htmlFor="ein" className="w9-label">
+                  Trust EIN <span className="w9-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="ein"
+                  className={`w9-input w9-input-tin ${errors.ein ? 'w9-input-error' : ''}`}
+                  value={formData.ein}
+                  onChange={(e) => handleEINChange(e.target.value)}
+                  placeholder="XX-XXXXXXX"
+                  maxLength={10}
+                />
+                {errors.ein && <span className="w9-error-message">{errors.ein}</span>}
+              </div>
+            ) : (
+              <div className="w9-form-group">
+                <label htmlFor="ssn" className="w9-label">
+                  Investor's Social Security Number <span className="w9-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="ssn"
+                  className={`w9-input w9-input-tin ${errors.ssn ? 'w9-input-error' : ''}`}
+                  value={formData.ssn}
+                  onChange={(e) => handleSSNChange(e.target.value)}
+                  placeholder="XXX-XX-XXXX"
+                  maxLength={11}
+                />
+                {errors.ssn && <span className="w9-error-message">{errors.ssn}</span>}
+              </div>
+            )}
+          </>
         ) : (
           // Other account types: show SSN/EIN toggle
           <>
@@ -271,8 +332,8 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
         )}
       </div>
 
-      {/* Optional Fields - hide for Individual and IRA accounts */}
-      {!isIndividual && !isIRA && (
+      {/* Optional Fields - hide for Individual, IRA, and Trust accounts */}
+      {!isIndividual && !isIRA && !isTrust && (
         <div className="w9-section w9-section-optional">
           <h3 className="w9-section-title">Optional Information</h3>
           

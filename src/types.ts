@@ -285,10 +285,24 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
       break;
       
     case 2:
-      // For trusts, only businessName (trust name) is required
+      // For trusts, LLC, and corporations: businessName is required, personal name is optional
       if (data.accountType === 'trust') {
         if (!data.businessName.trim()) {
           errors.businessName = 'Trust name is required';
+        }
+      } else if (data.accountType === 'llc') {
+        if (!data.name.trim()) {
+          errors.name = 'Name is required';
+        }
+        if (!data.businessName.trim()) {
+          errors.businessName = 'LLC name is required';
+        }
+      } else if (data.accountType === 'corporation') {
+        if (!data.name.trim()) {
+          errors.name = 'Name is required';
+        }
+        if (!data.businessName.trim()) {
+          errors.businessName = 'Corporation name is required';
         }
       } else {
         if (!data.name.trim()) {
