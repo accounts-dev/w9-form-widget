@@ -1,5 +1,8 @@
 /* W9 Form Widget Styles */
 
+/* Import Google Font for cursive signature */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
 /* ============================================
    CSS Variables (Customizable)
    ============================================ */
@@ -417,9 +420,11 @@
 }
 
 .w9-signature-typed-display {
-  font-family: 'Brush Script MT', 'Segoe Script', 'Bradley Hand', cursive;
-  font-size: 32px;
-  color: var(--w9-text-color);
+  font-family: 'Dancing Script', 'Brush Script MT', 'Segoe Script', cursive;
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a365d;
+  letter-spacing: 1px;
 }
 
 .w9-input-date {
@@ -1052,4 +1057,76 @@
 .w9-input-ira-ein {
   border: 2px solid var(--w9-primary-color) !important;
   background: rgba(247, 161, 26, 0.03);
+}
+
+/* ============================================
+   Trust TIN Emphasized Notice
+   ============================================ */
+.w9-trust-tin-notice {
+  background: linear-gradient(135deg, rgba(247, 161, 26, 0.12) 0%, rgba(247, 161, 26, 0.06) 100%);
+  border: 2px solid var(--w9-primary-color);
+  border-radius: var(--w9-border-radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.w9-trust-tin-question {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.w9-trust-tin-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.w9-trust-tin-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--w9-text-color);
+  line-height: 1.4;
+}
+
+.w9-trust-tin-help {
+  margin: 0;
+  font-size: 14px;
+  color: var(--w9-text-muted);
+  padding-left: 40px;
+}
+
+/* ============================================
+   LLC Type Selection
+   ============================================ */
+.w9-llc-type-question {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.w9-llc-type-icon {
+  font-size: 32px;
+}
+
+.w9-llc-type-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--w9-text-color);
+}
+
+.w9-llc-tin-notice {
+  background: rgba(247, 161, 26, 0.08);
+  border: 1px solid rgba(247, 161, 26, 0.3);
+  border-radius: var(--w9-border-radius);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.w9-llc-tin-notice p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--w9-text-color);
+  line-height: 1.5;
 }

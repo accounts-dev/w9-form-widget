@@ -8,6 +8,7 @@ import {
 } from '../types';
 import { StepAccountType } from './StepAccountType';
 import { StepCustodian } from './StepCustodian';
+import { StepLLCType } from './StepLLCType';
 import { StepIdentity } from './StepIdentity';
 import { StepTaxClassification } from './StepTaxClassification';
 import { StepAddressTIN } from './StepAddressTIN';
@@ -21,7 +22,7 @@ export const FormWizard: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Auto-set tax classification based on account type
+  // Auto-set tax classification based on account type and LLC type
   useEffect(() => {
     if (formData.accountType === 'ira') {
       setFormData(prev => ({
@@ -45,6 +46,42 @@ export const FormWizard: React.FC = () => {
       }));
     }
   }, [formData.accountType]);
+
+  // Auto-set tax classification based on LLC type
+  useEffect(() => {
+    if (formData.accountType === 'llc' && formData.llcType) {
+      if (formData.llcType === 'disregarded') {
+        // Disregarded LLC: treated as individual/sole proprietor
+        setFormData(prev => ({
+          ...prev,
+          taxClassification: 'individual',
+          llcClassification: null,
+          otherDescription: ''
+        }));
+      } else if (formData.llcType === 'c-corp') {
+        setFormData(prev => ({
+          ...prev,
+          taxClassification: 'llc',
+          llcClassification: 'C',
+          otherDescription: ''
+        }));
+      } else if (formData.llcType === 's-corp') {
+        setFormData(prev => ({
+          ...prev,
+          taxClassification: 'llc',
+          llcClassification: 'S',
+          otherDescription: ''
+        }));
+      } else if (formData.llcType === 'partnership') {
+        setFormData(prev => ({
+          ...prev,
+          taxClassification: 'llc',
+          llcClassification: 'P',
+          otherDescription: ''
+        }));
+      }
+    }
+  }, [formData.accountType, formData.llcType]);
 
   const updateFormData = (updates: Partial<W9FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -73,6 +110,7 @@ export const FormWizard: React.FC = () => {
       custodianZip: '',
       iraAccountNumber: '',
       iraEin: '',
+      llcType: null,
       name: 'John A. Doe',
       businessName: '',
       taxClassification: 'individual',
@@ -104,11 +142,15 @@ export const FormWizard: React.FC = () => {
       steps.push(formSteps[1]); // Custodian
     }
     
+    if (formData.accountType === 'llc') {
+      steps.push(formSteps[6]); // LLC Type - ask first for LLCs
+    }
+    
     // Add Identity step
     steps.push(formSteps[2]);
     
-    // Skip Tax Classification for IRA, Individual, and Trust (auto-set)
-    if (formData.accountType !== 'ira' && formData.accountType !== 'individual' && formData.accountType !== 'trust') {
+    // Skip Tax Classification for IRA, Individual, Trust, and LLC (auto-set based on LLC type)
+    if (formData.accountType !== 'ira' && formData.accountType !== 'individual' && formData.accountType !== 'trust' && formData.accountType !== 'llc') {
       steps.push(formSteps[3]); // Tax Classification
     }
     
@@ -203,6 +245,14 @@ export const FormWizard: React.FC = () => {
             formData={formData}
             updateFormData={updateFormData}
             errors={errors}
+          />
+        );
+      case 6:
+        return (
+          <StepLLCType
+            formData={formData}
+            errors={errors}
+            onChange={onChange}
           />
         );
       default:

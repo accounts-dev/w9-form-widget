@@ -25,6 +25,8 @@ export type TaxClassification =
 
 export type LLCClassification = 'C' | 'S' | 'P';
 
+export type LLCType = 'disregarded' | 'c-corp' | 's-corp' | 'partnership';
+
 export type TINType = 'ssn' | 'ein';
 
 export interface W9FormData {
@@ -40,6 +42,9 @@ export interface W9FormData {
   custodianZip: string;
   iraAccountNumber: string;
   iraEin: string;
+  
+  // LLC-specific fields
+  llcType: LLCType | null;
   
   // Section 1: Identity
   name: string;
@@ -114,6 +119,9 @@ export const initialFormData: W9FormData = {
   iraAccountNumber: '',
   iraEin: '',
   
+  // LLC fields
+  llcType: null,
+  
   name: '',
   businessName: '',
   taxClassification: null,
@@ -172,6 +180,11 @@ export const formSteps: FormStep[] = [
     id: 5,
     title: 'Signature',
     description: 'Sign and certify your information'
+  },
+  {
+    id: 6,
+    title: 'LLC Type',
+    description: 'Select your LLC classification'
   }
 ];
 
@@ -343,14 +356,34 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
         }
       }
       
-      // TIN validation - different for IRA vs non-IRA
+      // TIN validation - different based on account type
       if (data.accountType === 'ira') {
+        // IRA: requires IRA EIN
         if (!data.iraEin.trim()) {
           errors.iraEin = 'IRA EIN is required';
         } else if (!/^\d{2}-?\d{7}$/.test(data.iraEin.replace(/\s/g, ''))) {
           errors.iraEin = 'Invalid EIN format (XX-XXXXXXX)';
         }
+      } else if (data.accountType === 'llc' && data.llcType === 'disregarded') {
+        // Disregarded LLC: requires SSN, EIN is optional
+        if (!data.ssn.trim()) {
+          errors.ssn = 'Social Security Number is required';
+        } else if (!/^\d{3}-?\d{2}-?\d{4}$/.test(data.ssn.replace(/\s/g, ''))) {
+          errors.ssn = 'Invalid SSN format (XXX-XX-XXXX)';
+        }
+        // EIN is optional but validate format if provided
+        if (data.ein.trim() && !/^\d{2}-?\d{7}$/.test(data.ein.replace(/\s/g, ''))) {
+          errors.ein = 'Invalid EIN format (XX-XXXXXXX)';
+        }
+      } else if (data.accountType === 'llc' && data.llcType && data.llcType !== 'disregarded') {
+        // Standard LLC (C Corp, S Corp, Partnership): requires EIN only
+        if (!data.ein.trim()) {
+          errors.ein = 'LLC EIN is required';
+        } else if (!/^\d{2}-?\d{7}$/.test(data.ein.replace(/\s/g, ''))) {
+          errors.ein = 'Invalid EIN format (XX-XXXXXXX)';
+        }
       } else {
+        // Other account types: SSN or EIN based on selection
         if (data.tinType === 'ssn') {
           if (!data.ssn.trim()) {
             errors.ssn = 'Social Security Number is required';
@@ -373,6 +406,13 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
       }
       if (!data.signatureDate) {
         errors.signatureDate = 'Date is required';
+      }
+      break;
+      
+    case 6:
+      // LLC Type selection
+      if (data.accountType === 'llc' && !data.llcType) {
+        errors.llcType = 'Please select your LLC type';
       }
       break;
   }

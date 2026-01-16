@@ -15,6 +15,9 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
   const isIRA = formData.accountType === 'ira';
   const isIndividual = formData.accountType === 'individual';
   const isTrust = formData.accountType === 'trust';
+  const isLLC = formData.accountType === 'llc';
+  const isDisregardedLLC = isLLC && formData.llcType === 'disregarded';
+  const isStandardLLC = isLLC && formData.llcType && formData.llcType !== 'disregarded';
 
   // Format IRA EIN as user types (XX-XXXXXXX)
   const handleIRAEINChange = (value: string) => {
@@ -211,9 +214,17 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
         ) : isTrust ? (
           // Trust: Ask if trust has EIN or uses investor's SSN
           <>
-            <p className="w9-help-text">
-              Does the trust have its own EIN, or does it use the investor's Social Security Number?
-            </p>
+            <div className="w9-trust-tin-notice">
+              <div className="w9-trust-tin-question">
+                <span className="w9-trust-tin-icon">❓</span>
+                <span className="w9-trust-tin-text">
+                  Does the trust have its own EIN, or does it use the investor's Social Security Number?
+                </span>
+              </div>
+              <p className="w9-trust-tin-help">
+                Select the appropriate option below based on how the trust files taxes.
+              </p>
+            </div>
 
             <div className="w9-form-group">
               <div className="w9-tin-toggle">
@@ -267,6 +278,71 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
                 {errors.ssn && <span className="w9-error-message">{errors.ssn}</span>}
               </div>
             )}
+          </>
+        ) : isDisregardedLLC ? (
+          // Disregarded LLC: need BOTH investor SSN and LLC EIN
+          <>
+            <div className="w9-llc-tin-notice">
+              <p><strong>Disregarded Entity LLC:</strong> Since your LLC is a disregarded entity (single-member LLC), 
+              we need both your personal SSN and the LLC's EIN (if it has one).</p>
+            </div>
+            
+            <div className="w9-form-group">
+              <label htmlFor="ssn" className="w9-label">
+                Your Social Security Number <span className="w9-required">*</span>
+              </label>
+              <input
+                type="text"
+                id="ssn"
+                className={`w9-input w9-input-tin ${errors.ssn ? 'w9-input-error' : ''}`}
+                value={formData.ssn}
+                onChange={(e) => handleSSNChange(e.target.value)}
+                placeholder="XXX-XX-XXXX"
+                maxLength={11}
+              />
+              {errors.ssn && <span className="w9-error-message">{errors.ssn}</span>}
+            </div>
+
+            <div className="w9-form-group">
+              <label htmlFor="ein" className="w9-label">
+                LLC's EIN (if applicable)
+              </label>
+              <p className="w9-help-text">
+                Enter the LLC's EIN if it has one. This is optional for disregarded entities.
+              </p>
+              <input
+                type="text"
+                id="ein"
+                className={`w9-input w9-input-tin ${errors.ein ? 'w9-input-error' : ''}`}
+                value={formData.ein}
+                onChange={(e) => handleEINChange(e.target.value)}
+                placeholder="XX-XXXXXXX"
+                maxLength={10}
+              />
+              {errors.ein && <span className="w9-error-message">{errors.ein}</span>}
+            </div>
+          </>
+        ) : isStandardLLC ? (
+          // Standard LLC (C Corp, S Corp, Partnership): LLC EIN only
+          <>
+            <p className="w9-help-text">
+              Enter your LLC's Employer Identification Number (EIN).
+            </p>
+            <div className="w9-form-group">
+              <label htmlFor="ein" className="w9-label">
+                LLC's EIN <span className="w9-required">*</span>
+              </label>
+              <input
+                type="text"
+                id="ein"
+                className={`w9-input w9-input-tin ${errors.ein ? 'w9-input-error' : ''}`}
+                value={formData.ein}
+                onChange={(e) => handleEINChange(e.target.value)}
+                placeholder="XX-XXXXXXX"
+                maxLength={10}
+              />
+              {errors.ein && <span className="w9-error-message">{errors.ein}</span>}
+            </div>
           </>
         ) : (
           // Other account types: show SSN/EIN toggle
