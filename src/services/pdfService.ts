@@ -86,7 +86,12 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   // IRA Account Handling
   const isIRA = formData.accountType === 'ira';
   
-  // Line 1: Name (for IRA: custodian name)
+  // Determine if this is an entity-only account type (entity name goes on Line 1, no personal name)
+  const isEntityOnly = formData.accountType === 'corporation' || formData.accountType === '401k' || 
+    (formData.accountType === 'llc' && formData.llcType && formData.llcType !== 'disregarded');
+
+  // Line 1: Name
+  // IRA: custodian name | Entity-only (Corp, 401k, Standard LLC): business/entity name | Others: personal name
   if (isIRA && formData.custodian) {
     let custodianName = '';
     if (formData.custodian === 'other') {
@@ -97,19 +102,25 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].f1_01[0]'
     ], custodianName);
+  } else if (isEntityOnly && formData.businessName) {
+    // Entity name goes on Line 1 for corps, 401k, and standard LLCs
+    trySetTextField(form, [
+      'topmostSubform[0].Page1[0].f1_01[0]'
+    ], formData.businessName);
   } else if (formData.name) {
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].f1_01[0]'
     ], formData.name);
   }
 
-  // Line 2: Business name (for IRA: "FBO [Investor Name] IRA")
+  // Line 2: Business name / DBA
+  // IRA: "FBO [Name] IRA" | Entity-only: skip (already on Line 1) | Disregarded LLC: LLC name | Others: business name
   if (isIRA && formData.name) {
     const fboName = `FBO ${formData.name} IRA`;
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].f1_02[0]'
     ], fboName);
-  } else if (formData.businessName) {
+  } else if (!isEntityOnly && formData.businessName) {
     trySetTextField(form, [
       'topmostSubform[0].Page1[0].f1_02[0]'
     ], formData.businessName);
@@ -258,8 +269,8 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
         trySetTextField(form, ['topmostSubform[0].Page1[0].f1_15[0]'], einDigits.substring(2, 9));
       }
     }
-  } else if (formData.accountType === 'corporation' && formData.ein) {
-    // Corporation: EIN only → EIN fields
+  } else if ((formData.accountType === 'corporation' || formData.accountType === '401k') && formData.ein) {
+    // Corporation / 401k: EIN only → EIN fields
     const einDigits = formData.ein.replace(/\D/g, '');
     if (einDigits.length >= 9) {
       trySetTextField(form, ['topmostSubform[0].Page1[0].f1_14[0]'], einDigits.substring(0, 2));

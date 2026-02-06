@@ -44,6 +44,13 @@ export const FormWizard: React.FC = () => {
         llcClassification: null,
         otherDescription: ''
       }));
+    } else if (formData.accountType === '401k') {
+      setFormData(prev => ({
+        ...prev,
+        taxClassification: 'trustEstate',
+        llcClassification: null,
+        otherDescription: ''
+      }));
     }
   }, [formData.accountType]);
 
@@ -149,8 +156,8 @@ export const FormWizard: React.FC = () => {
     // Add Identity step
     steps.push(formSteps[2]);
     
-    // Skip Tax Classification for IRA, Individual, Trust, and LLC (auto-set based on LLC type)
-    if (formData.accountType !== 'ira' && formData.accountType !== 'individual' && formData.accountType !== 'trust' && formData.accountType !== 'llc') {
+    // Skip Tax Classification for IRA, Individual, Trust, LLC, and 401k (auto-set)
+    if (formData.accountType !== 'ira' && formData.accountType !== 'individual' && formData.accountType !== 'trust' && formData.accountType !== 'llc' && formData.accountType !== '401k') {
       steps.push(formSteps[3]); // Tax Classification
     }
     

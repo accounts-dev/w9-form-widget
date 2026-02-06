@@ -17,11 +17,12 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
   const isTrust = formData.accountType === 'trust';
   const isLLC = formData.accountType === 'llc';
   const isCorporation = formData.accountType === 'corporation';
+  const is401k = formData.accountType === '401k';
   const isStandardLLC = isLLC && formData.llcType && formData.llcType !== 'disregarded';
   
-  // Trusts, non-Disregarded LLCs, and Corporations only need business/entity name (no personal name)
+  // Entity-only accounts: Trust, Standard LLC, Corporation, 401k — only need entity/plan name
   // IRA/Individual/Disregarded LLC need personal name
-  const showPersonalName = !isTrust && !isStandardLLC && !isCorporation;
+  const showPersonalName = !isTrust && !isStandardLLC && !isCorporation && !is401k;
   const showBusinessName = !isIRA && !isIndividual;
 
   return (
@@ -64,8 +65,8 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
       {showBusinessName && (
         <div className="w9-form-group">
           <label htmlFor="businessName" className="w9-label">
-            {isTrust ? 'Trust Name' : (isLLC ? 'LLC Name' : (isCorporation ? 'Corporation Name' : 'Business Name'))} 
-            {(isTrust || isLLC || isCorporation) && <span className="w9-required">*</span>}
+            {isTrust ? 'Trust Name' : (isLLC ? 'LLC Name' : (isCorporation ? 'Corporation Name' : (is401k ? '401k Plan Name' : 'Business Name')))} 
+            {(isTrust || isLLC || isCorporation || is401k) && <span className="w9-required">*</span>}
           </label>
           <p className="w9-help-text">
             {isTrust 
@@ -74,7 +75,9 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
                 ? 'Enter the full legal name of your LLC'
                 : isCorporation
                   ? 'Enter the full legal name of your corporation'
-                  : 'If different from above. Disregarded entity name, if applicable.'}
+                  : is401k
+                    ? 'Enter the full legal name of the 401k plan'
+                    : 'If different from above. Disregarded entity name, if applicable.'}
           </p>
           <input
             type="text"
@@ -82,7 +85,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
             className={`w9-input ${errors.businessName ? 'w9-input-error' : ''}`}
             value={formData.businessName}
             onChange={(e) => updateFormData({ businessName: e.target.value })}
-            placeholder={isTrust ? 'Full legal name of the trust' : (isLLC ? 'Full legal name of the LLC' : (isCorporation ? 'Full legal name of the corporation' : 'Business name (optional)'))}
+            placeholder={isTrust ? 'Full legal name of the trust' : (isLLC ? 'Full legal name of the LLC' : (isCorporation ? 'Full legal name of the corporation' : (is401k ? 'Full legal name of the 401k plan' : 'Business name (optional)')))}
           />
           {errors.businessName && <span className="w9-error-message">{errors.businessName}</span>}
         </div>
