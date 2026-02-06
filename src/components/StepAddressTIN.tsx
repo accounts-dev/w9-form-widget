@@ -169,7 +169,7 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
                 <ul className="w9-ira-ein-list">
                   <li>This is <strong>NOT</strong> your personal Social Security Number</li>
                   <li>This is <strong>NOT</strong> the custodian's general EIN</li>
-                  <li>Your IRA EIN was provided when you opened your Self-Directed IRA</li>
+                  <li>You must apply for this EIN on the <strong>IRS website</strong> (irs.gov)</li>
                 </ul>
               </div>
             </div>
@@ -212,13 +212,13 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
             </div>
           </>
         ) : isTrust ? (
-          // Trust: Ask if trust has EIN or uses investor's SSN
+          // Trust: Ask if trust has EIN or uses your SSN
           <>
             <div className="w9-trust-tin-notice">
               <div className="w9-trust-tin-question">
                 <span className="w9-trust-tin-icon">❓</span>
                 <span className="w9-trust-tin-text">
-                  Does the trust have its own EIN, or does it use the investor's Social Security Number?
+                  Does the trust have its own EIN, or does it use your Social Security Number?
                 </span>
               </div>
               <p className="w9-trust-tin-help">
@@ -240,7 +240,7 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
                   className={`w9-tin-toggle-btn ${formData.tinType === 'ssn' ? 'active' : ''}`}
                   onClick={() => updateFormData({ tinType: 'ssn' as TINType, ein: '' })}
                 >
-                  Investor's SSN
+                  Your SSN
                 </button>
               </div>
             </div>
@@ -264,7 +264,7 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
             ) : (
               <div className="w9-form-group">
                 <label htmlFor="ssn" className="w9-label">
-                  Investor's Social Security Number <span className="w9-required">*</span>
+                  Your Social Security Number <span className="w9-required">*</span>
                 </label>
                 <input
                   type="text"
@@ -408,8 +408,8 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
         )}
       </div>
 
-      {/* Optional Fields - hide for Individual, IRA, and Trust accounts */}
-      {!isIndividual && !isIRA && !isTrust && (
+      {/* Optional Fields - hide for Individual, IRA, Trust, and LLC accounts */}
+      {!isIndividual && !isIRA && !isTrust && !isLLC && (
         <div className="w9-section w9-section-optional">
           <h3 className="w9-section-title">Optional Information</h3>
           
