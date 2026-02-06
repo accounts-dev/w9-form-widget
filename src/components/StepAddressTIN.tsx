@@ -171,6 +171,17 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
                   <li>This is <strong>NOT</strong> the custodian's general EIN</li>
                   <li>You must apply for this EIN on the <strong>IRS website</strong> (irs.gov)</li>
                 </ul>
+                <div className="w9-ira-ein-video">
+                  <p className="w9-ira-ein-video-label">📹 Watch how to apply for an IRA EIN on the IRS website:</p>
+                  <div className="w9-ira-ein-video-wrapper">
+                    <iframe
+                      src="https://www.loom.com/embed/07f7f5d1b3ac4c06ac834ed6c3eeabab"
+                      frameBorder="0"
+                      allowFullScreen
+                      style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, borderRadius: '8px' }}
+                    ></iframe>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="w9-form-group">
@@ -284,7 +295,7 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
           <>
             <div className="w9-llc-tin-notice">
               <p><strong>Disregarded Entity LLC:</strong> Since your LLC is a disregarded entity (single-member LLC), 
-              we need both your personal SSN and the LLC's EIN (if it has one).</p>
+              we need both your personal SSN and the LLC's EIN.</p>
             </div>
             
             <div className="w9-form-group">
@@ -305,11 +316,8 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
 
             <div className="w9-form-group">
               <label htmlFor="ein" className="w9-label">
-                LLC's EIN (if applicable)
+                LLC's EIN <span className="w9-required">*</span>
               </label>
-              <p className="w9-help-text">
-                Enter the LLC's EIN if it has one. This is optional for disregarded entities.
-              </p>
               <input
                 type="text"
                 id="ein"

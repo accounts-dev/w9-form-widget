@@ -370,14 +370,15 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
           errors.iraEin = 'Invalid EIN format (XX-XXXXXXX)';
         }
       } else if (data.accountType === 'llc' && data.llcType === 'disregarded') {
-        // Disregarded LLC: requires SSN, EIN is optional
+        // Disregarded LLC: requires both SSN and EIN
         if (!data.ssn.trim()) {
           errors.ssn = 'Social Security Number is required';
         } else if (!/^\d{3}-?\d{2}-?\d{4}$/.test(data.ssn.replace(/\s/g, ''))) {
           errors.ssn = 'Invalid SSN format (XXX-XX-XXXX)';
         }
-        // EIN is optional but validate format if provided
-        if (data.ein.trim() && !/^\d{2}-?\d{7}$/.test(data.ein.replace(/\s/g, ''))) {
+        if (!data.ein.trim()) {
+          errors.ein = 'LLC EIN is required';
+        } else if (!/^\d{2}-?\d{7}$/.test(data.ein.replace(/\s/g, ''))) {
           errors.ein = 'Invalid EIN format (XX-XXXXXXX)';
         }
       } else if (data.accountType === 'llc' && data.llcType && data.llcType !== 'disregarded') {

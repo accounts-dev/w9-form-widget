@@ -202,20 +202,22 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   }
 
   // Line 7: Account numbers (for IRA: include IRA account number)
+  // Note: f1_09 = Requester's name/address, f1_10 = Account numbers (Line 7)
   if (isIRA && formData.iraAccountNumber) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_09[0]'
+      'topmostSubform[0].Page1[0].f1_10[0]'
     ], `IRA: ${formData.iraAccountNumber}`);
   } else if (formData.accountNumbers) {
     trySetTextField(form, [
-      'topmostSubform[0].Page1[0].f1_09[0]'
+      'topmostSubform[0].Page1[0].f1_10[0]'
     ], formData.accountNumbers);
   }
 
   // ============================================
   // SSN/EIN - The PDF uses GROUPED fields, not individual digit boxes
   // For IRA accounts, use IRA EIN instead of personal SSN
-  // f1_10 = Requester's name (skip for TIN)
+  // f1_09 = Requester's name/address (not used)
+  // f1_10 = Account numbers / Line 7 (used above)
   // f1_11 = SSN first 3 digits (XXX)
   // f1_12 = SSN middle 2 digits (XX)
   // f1_13 = SSN last 4 digits (XXXX)
@@ -229,6 +231,32 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
     if (einDigits.length >= 9) {
       trySetTextField(form, ['topmostSubform[0].Page1[0].f1_14[0]'], einDigits.substring(0, 2));
       trySetTextField(form, ['topmostSubform[0].Page1[0].f1_15[0]'], einDigits.substring(2, 9));
+    }
+  } else if (formData.accountType === 'llc' && formData.llcType === 'disregarded') {
+    // Disregarded LLC: write both SSN and EIN
+    if (formData.ssn) {
+      const ssnDigits = formData.ssn.replace(/\D/g, '');
+      if (ssnDigits.length >= 9) {
+        trySetTextField(form, ['topmostSubform[0].Page1[0].f1_11[0]'], ssnDigits.substring(0, 3));
+        trySetTextField(form, ['topmostSubform[0].Page1[0].f1_12[0]'], ssnDigits.substring(3, 5));
+        trySetTextField(form, ['topmostSubform[0].Page1[0].f1_13[0]'], ssnDigits.substring(5, 9));
+      }
+    }
+    if (formData.ein) {
+      const einDigits = formData.ein.replace(/\D/g, '');
+      if (einDigits.length >= 9) {
+        trySetTextField(form, ['topmostSubform[0].Page1[0].f1_14[0]'], einDigits.substring(0, 2));
+        trySetTextField(form, ['topmostSubform[0].Page1[0].f1_15[0]'], einDigits.substring(2, 9));
+      }
+    }
+  } else if (formData.accountType === 'llc' && formData.llcType && formData.llcType !== 'disregarded') {
+    // Standard LLC (C Corp, S Corp, Partnership): EIN only → EIN fields
+    if (formData.ein) {
+      const einDigits = formData.ein.replace(/\D/g, '');
+      if (einDigits.length >= 9) {
+        trySetTextField(form, ['topmostSubform[0].Page1[0].f1_14[0]'], einDigits.substring(0, 2));
+        trySetTextField(form, ['topmostSubform[0].Page1[0].f1_15[0]'], einDigits.substring(2, 9));
+      }
     }
   } else if (formData.tinType === 'ssn' && formData.ssn) {
     const ssnDigits = formData.ssn.replace(/\D/g, '');

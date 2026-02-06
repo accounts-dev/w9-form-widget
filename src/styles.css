@@ -1054,6 +1054,26 @@
   color: var(--w9-error-color);
 }
 
+.w9-ira-ein-video {
+  margin-top: 12px;
+}
+
+.w9-ira-ein-video-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--w9-text-color);
+  margin-bottom: 8px;
+}
+
+.w9-ira-ein-video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--w9-border-color);
+}
+
 .w9-input-ira-ein {
   border: 2px solid var(--w9-primary-color) !important;
   background: rgba(247, 161, 26, 0.03);

@@ -52,19 +52,18 @@ export const StepLLCType: React.FC<StepLLCTypeProps> = ({
             className={`w9-account-type-card ${formData.llcType === type.value ? 'selected' : ''} ${errors.llcType ? 'error' : ''}`}
             onClick={() => onChange('llcType', type.value)}
           >
-            <div className="account-type-content">
+            <div className="account-type-radio">
               <input
                 type="radio"
                 name="llcType"
                 value={type.value}
                 checked={formData.llcType === type.value}
                 onChange={() => onChange('llcType', type.value)}
-                className="account-type-radio"
               />
-              <div className="account-type-details">
-                <h4 className="account-type-label">{type.label}</h4>
-                <p className="account-type-description">{type.description}</p>
-              </div>
+            </div>
+            <div className="account-type-content">
+              <label>{type.label}</label>
+              <p className="account-type-description">{type.description}</p>
             </div>
           </div>
         ))}
