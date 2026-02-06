@@ -352,6 +352,28 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
               {errors.ein && <span className="w9-error-message">{errors.ein}</span>}
             </div>
           </>
+        ) : formData.accountType === 'corporation' ? (
+          // Corporation: EIN only, no SSN option
+          <>
+            <p className="w9-help-text">
+              Enter your corporation's Employer Identification Number (EIN).
+            </p>
+            <div className="w9-form-group">
+              <label htmlFor="ein" className="w9-label">
+                Employer Identification Number <span className="w9-required">*</span>
+              </label>
+              <input
+                type="text"
+                id="ein"
+                className={`w9-input w9-input-tin ${errors.ein ? 'w9-input-error' : ''}`}
+                value={formData.ein}
+                onChange={(e) => handleEINChange(e.target.value)}
+                placeholder="XX-XXXXXXX"
+                maxLength={10}
+              />
+              {errors.ein && <span className="w9-error-message">{errors.ein}</span>}
+            </div>
+          </>
         ) : (
           // Other account types: show SSN/EIN toggle
           <>
@@ -416,8 +438,8 @@ export const StepAddressTIN: React.FC<StepAddressTINProps> = ({
         )}
       </div>
 
-      {/* Optional Fields - hide for Individual, IRA, Trust, and LLC accounts */}
-      {!isIndividual && !isIRA && !isTrust && !isLLC && (
+      {/* Optional Fields - hide for Individual, IRA, Trust, LLC, and Corporation accounts */}
+      {!isIndividual && !isIRA && !isTrust && !isLLC && formData.accountType !== 'corporation' && (
         <div className="w9-section w9-section-optional">
           <h3 className="w9-section-title">Optional Information</h3>
           

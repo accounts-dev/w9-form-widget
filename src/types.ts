@@ -316,9 +316,6 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
           errors.businessName = 'LLC name is required';
         }
       } else if (data.accountType === 'corporation') {
-        if (!data.name.trim()) {
-          errors.name = 'Name is required';
-        }
         if (!data.businessName.trim()) {
           errors.businessName = 'Corporation name is required';
         }
@@ -385,6 +382,13 @@ export function validateStep(step: number, data: W9FormData): ValidationErrors {
         // Standard LLC (C Corp, S Corp, Partnership): requires EIN only
         if (!data.ein.trim()) {
           errors.ein = 'LLC EIN is required';
+        } else if (!/^\d{2}-?\d{7}$/.test(data.ein.replace(/\s/g, ''))) {
+          errors.ein = 'Invalid EIN format (XX-XXXXXXX)';
+        }
+      } else if (data.accountType === 'corporation') {
+        // Corporation: requires EIN only
+        if (!data.ein.trim()) {
+          errors.ein = 'Employer Identification Number is required';
         } else if (!/^\d{2}-?\d{7}$/.test(data.ein.replace(/\s/g, ''))) {
           errors.ein = 'Invalid EIN format (XX-XXXXXXX)';
         }

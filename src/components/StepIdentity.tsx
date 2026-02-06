@@ -19,9 +19,9 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
   const isCorporation = formData.accountType === 'corporation';
   const isStandardLLC = isLLC && formData.llcType && formData.llcType !== 'disregarded';
   
-  // Trusts and non-Disregarded LLCs only need business/entity name (no personal name)
+  // Trusts, non-Disregarded LLCs, and Corporations only need business/entity name (no personal name)
   // IRA/Individual/Disregarded LLC need personal name
-  const showPersonalName = !isTrust && !isStandardLLC;
+  const showPersonalName = !isTrust && !isStandardLLC && !isCorporation;
   const showBusinessName = !isIRA && !isIndividual;
 
   return (

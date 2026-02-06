@@ -19,6 +19,7 @@ export const StepTaxClassification: React.FC<StepTaxClassificationProps> = ({
   errors
 }) => {
   const isIRA = formData.accountType === 'ira';
+  const isCorporation = formData.accountType === 'corporation';
 
   const handleTaxClassificationChange = (value: TaxClassification) => {
     // Don't allow changes for IRA accounts
@@ -50,35 +51,74 @@ export const StepTaxClassification: React.FC<StepTaxClassificationProps> = ({
           <strong>IRA Account:</strong> Tax classification is automatically set to "Other - IRA" for IRA accounts.
         </div>
       )}
-      
-      <div className="w9-form-group">
-        <label className="w9-label">
-          Federal Tax Classification <span className="w9-required">*</span>
-        </label>
-        <p className="w9-help-text">
-          Check the appropriate box for federal tax classification
-        </p>
-        
-        <div className="w9-radio-group">
-          {taxClassificationOptions.map((option) => (
-            <label key={option.value} className="w9-radio-label">
+
+      {isCorporation ? (
+        <div className="w9-form-group">
+          <label className="w9-label">
+            Corporation Type <span className="w9-required">*</span>
+          </label>
+          <p className="w9-help-text">
+            Select whether your corporation is a C Corporation or S Corporation.
+          </p>
+          
+          <div className="w9-radio-group">
+            <label className="w9-radio-label">
               <input
                 type="radio"
                 name="taxClassification"
-                value={option.value}
-                checked={formData.taxClassification === option.value}
-                onChange={() => handleTaxClassificationChange(option.value)}
+                value="cCorporation"
+                checked={formData.taxClassification === 'cCorporation'}
+                onChange={() => handleTaxClassificationChange('cCorporation')}
                 className="w9-radio"
-                disabled={isIRA}
               />
-              <span className="w9-radio-text">{option.label}</span>
+              <span className="w9-radio-text">C Corporation</span>
             </label>
-          ))}
+            <label className="w9-radio-label">
+              <input
+                type="radio"
+                name="taxClassification"
+                value="sCorporation"
+                checked={formData.taxClassification === 'sCorporation'}
+                onChange={() => handleTaxClassificationChange('sCorporation')}
+                className="w9-radio"
+              />
+              <span className="w9-radio-text">S Corporation</span>
+            </label>
+          </div>
+          {errors.taxClassification && (
+            <span className="w9-error-message">{errors.taxClassification}</span>
+          )}
         </div>
-        {errors.taxClassification && (
-          <span className="w9-error-message">{errors.taxClassification}</span>
-        )}
-      </div>
+      ) : (
+        <div className="w9-form-group">
+          <label className="w9-label">
+            Federal Tax Classification <span className="w9-required">*</span>
+          </label>
+          <p className="w9-help-text">
+            Check the appropriate box for federal tax classification
+          </p>
+          
+          <div className="w9-radio-group">
+            {taxClassificationOptions.map((option) => (
+              <label key={option.value} className="w9-radio-label">
+                <input
+                  type="radio"
+                  name="taxClassification"
+                  value={option.value}
+                  checked={formData.taxClassification === option.value}
+                  onChange={() => handleTaxClassificationChange(option.value)}
+                  className="w9-radio"
+                  disabled={isIRA}
+                />
+                <span className="w9-radio-text">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {errors.taxClassification && (
+            <span className="w9-error-message">{errors.taxClassification}</span>
+          )}
+        </div>
+      )}
 
       {/* Conditional: LLC Classification */}
       {formData.taxClassification === 'llc' && (

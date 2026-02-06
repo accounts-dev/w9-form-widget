@@ -258,6 +258,13 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
         trySetTextField(form, ['topmostSubform[0].Page1[0].f1_15[0]'], einDigits.substring(2, 9));
       }
     }
+  } else if (formData.accountType === 'corporation' && formData.ein) {
+    // Corporation: EIN only → EIN fields
+    const einDigits = formData.ein.replace(/\D/g, '');
+    if (einDigits.length >= 9) {
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_14[0]'], einDigits.substring(0, 2));
+      trySetTextField(form, ['topmostSubform[0].Page1[0].f1_15[0]'], einDigits.substring(2, 9));
+    }
   } else if (formData.tinType === 'ssn' && formData.ssn) {
     const ssnDigits = formData.ssn.replace(/\D/g, '');
     if (ssnDigits.length >= 9) {
