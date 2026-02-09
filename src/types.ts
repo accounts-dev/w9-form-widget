@@ -83,7 +83,7 @@ export interface W9FormData {
 // Custodian data
 export const custodianData: Record<Exclude<Custodian, 'other'>, { name: string; address: string; city: string; state: string; zip: string }> = {
   'equity-trust': {
-    name: 'Equity Trust Company',
+    name: 'Equity Trust Company Custodian',
     address: '1 Equity Way',
     city: 'Westlake',
     state: 'OH',
@@ -97,7 +97,7 @@ export const custodianData: Record<Exclude<Custodian, 'other'>, { name: string; 
     zip: '27707'
   },
   'ira-financial': {
-    name: 'IRA Financial Trust Company',
+    name: 'IRA Financials Trust Company',
     address: '1691 Michigan Ave Ste 305',
     city: 'Miami Beach',
     state: 'FL',

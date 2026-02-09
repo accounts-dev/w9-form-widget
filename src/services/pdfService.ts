@@ -87,7 +87,7 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
   const isIRA = formData.accountType === 'ira';
   
   // Determine if this is an entity-only account type (entity name goes on Line 1, no personal name)
-  const isEntityOnly = formData.accountType === 'corporation' || formData.accountType === '401k' || 
+  const isEntityOnly = formData.accountType === 'trust' || formData.accountType === 'corporation' || formData.accountType === '401k' || 
     (formData.accountType === 'llc' && formData.llcType && formData.llcType !== 'disregarded');
 
   // Line 1: Name

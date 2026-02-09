@@ -8,9 +8,9 @@ interface StepCustodianProps {
 }
 
 const custodianOptions: { value: Custodian; label: string }[] = [
-  { value: 'equity-trust', label: 'Equity Trust Company' },
+  { value: 'equity-trust', label: 'Equity Trust Company Custodian' },
   { value: 'ira-innovations', label: 'IRA Innovations' },
-  { value: 'ira-financial', label: 'IRA Financial Trust Company' },
+  { value: 'ira-financial', label: 'IRA Financials Trust Company' },
   { value: 'other', label: 'Other Custodian' }
 ];
 

@@ -51,6 +51,14 @@ export const FormWizard: React.FC = () => {
         llcClassification: null,
         otherDescription: ''
       }));
+    } else if (formData.accountType === 'corporation') {
+      // Reset tax classification for corporation so LLC section doesn't linger
+      setFormData(prev => ({
+        ...prev,
+        taxClassification: null as any,
+        llcClassification: null,
+        otherDescription: ''
+      }));
     }
   }, [formData.accountType]);
 
