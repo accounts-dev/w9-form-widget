@@ -81,7 +81,7 @@ app.post('/api/send-w9-email', async (req, res) => {
   }
 
   const recipientEmail = process.env.W9_RECIPIENT_EMAIL || 'pedro@infinitecashflow.com';
-  const fromAddress = process.env.EMAIL_FROM || 'W9 Forms <onboarding@resend.dev>';
+  const fromAddress = process.env.EMAIL_FROM || 'W9 Forms <w9@updates.cs3investments.com>';
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
