@@ -29,6 +29,7 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadComplete, setDownloadComplete] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const completionSent = useRef(false);
 
   useEffect(() => {
@@ -68,31 +69,44 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
   const handleDownload = async () => {
     if (pdfBytes) {
       setIsDownloading(true);
+      setEmailError(null);
       
       // Generate filename with timestamp
       const timestamp = new Date().toISOString().split('T')[0];
       const safeName = formData.name.replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `W9_${safeName}_${timestamp}.pdf`;
-      
-      downloadPDF(pdfBytes, filename);
 
-      // Send email with the completed W9 PDF (both tracked and anonymous)
+      // Send email FIRST (before triggering download)
       if (!completionSent.current) {
         completionSent.current = true;
 
-        if (investorId && !hasBeenCompleted(investorId)) {
-          // Tracked investor: fire webhook + send email
-          markAsCompleted(investorId);
-          await notifyFormCompleted(investorId, investorName, formData as any, pdfBytes);
+        try {
+          if (investorId && !hasBeenCompleted(investorId)) {
+            // Tracked investor: fire webhook + send email
+            markAsCompleted(investorId);
+            await notifyFormCompleted(investorId, investorName, formData as any, pdfBytes);
+          }
+
+          // Always send email with the PDF
+          const submitterName = formData.name || investorName || 'Anonymous';
+          const emailSent = await sendW9Email(submitterName, formData as any, pdfBytes);
+
+          if (!emailSent) {
+            setEmailError('Failed to send email. The form was downloaded but the email could not be sent.');
+            completionSent.current = false; // Allow retry
+          }
+
+          // Clear saved form data
+          clearFormData(storageKey);
+        } catch (err) {
+          console.error('[PDFPreview] Error during completion:', err);
+          setEmailError('An error occurred while submitting. Please try again.');
+          completionSent.current = false; // Allow retry
         }
-
-        // Always send email with the PDF
-        const submitterName = formData.name || investorName || 'Anonymous';
-        await sendW9Email(submitterName, formData as any, pdfBytes);
-
-        // Clear saved form data
-        clearFormData(storageKey);
       }
+
+      // Then trigger the file download
+      downloadPDF(pdfBytes, filename);
       
       setTimeout(() => {
         setIsDownloading(false);
@@ -226,6 +240,11 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
           )}
         </button>
       </div>
+      {emailError && (
+        <div className="w9-error" style={{ marginTop: '12px' }}>
+          {emailError}
+        </div>
+      )}
     </div>
   );
 };
