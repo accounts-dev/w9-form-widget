@@ -32,6 +32,8 @@ jobs:
 
       - name: Build widget
         run: npm run build
+        env:
+          VITE_N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
 
       - name: Copy PDF template to dist
         run: cp "W9 Form Empty (1).pdf" dist/
