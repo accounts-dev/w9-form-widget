@@ -80,7 +80,7 @@ app.post('/api/send-w9-email', async (req, res) => {
     });
   }
 
-  const recipientEmail = process.env.W9_RECIPIENT_EMAIL || 'pedro@infinitecashflow.com';
+  const recipientEmails = (process.env.W9_RECIPIENT_EMAIL || 'pedro@infinitecashflow.com,matheus@cs3investments.com').split(',').map(e => e.trim());
   const fromAddress = process.env.EMAIL_FROM || 'W9 Forms <w9@updates.cs3investments.com>';
 
   try {
@@ -92,7 +92,7 @@ app.post('/api/send-w9-email', async (req, res) => {
       },
       body: JSON.stringify({
         from: fromAddress,
-        to: [recipientEmail],
+        to: recipientEmails,
         subject: `W9 Form Submitted – ${submitterName || 'Anonymous'}`,
         html: `
           <h2>New W9 Form Submission</h2>
@@ -124,8 +124,8 @@ app.post('/api/send-w9-email', async (req, res) => {
       return res.status(response.status).json({ error: 'Failed to send email', message: result.message || JSON.stringify(result) });
     }
 
-    console.log(`[Email] W9 sent to ${recipientEmail} for ${submitterName} (id: ${result.id})`);
-    return res.json({ success: true, message: `Email sent to ${recipientEmail}`, id: result.id });
+    console.log(`[Email] W9 sent to ${recipientEmails.join(', ')} for ${submitterName} (id: ${result.id})`);
+    return res.json({ success: true, message: `Email sent to ${recipientEmails.join(', ')}`, id: result.id });
   } catch (err) {
     console.error('[Email] Failed to send:', err);
     return res.status(500).json({ error: 'Failed to send email', message: err.message });
