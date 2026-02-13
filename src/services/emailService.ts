@@ -2,7 +2,7 @@
 // For anonymous submissions (no URL params), sends the completed W9 PDF
 // directly via the API server — no webhooks involved.
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
   let binary = '';
