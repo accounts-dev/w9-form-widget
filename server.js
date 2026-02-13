@@ -13,7 +13,7 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 
 const BASE_FORM_URL = process.env.FORM_BASE_URL || 'https://accounts-dev.github.io/w9-form-widget/';
 
@@ -37,7 +37,7 @@ let transporter = null;
 function getTransporter() {
   if (!transporter) {
     const host = process.env.SMTP_HOST;
-    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const port = parseInt(process.env.SMTP_PORT || '465', 10);
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
@@ -49,7 +49,7 @@ function getTransporter() {
     transporter = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure: true,  // use SSL (port 465)
       auth: { user, pass },
       connectionTimeout: 10000,  // 10s to connect
       greetingTimeout: 10000,    // 10s for greeting
