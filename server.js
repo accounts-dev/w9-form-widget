@@ -80,7 +80,7 @@ app.post('/api/send-w9-email', async (req, res) => {
     });
   }
 
-  const recipientEmails = (process.env.W9_RECIPIENT_EMAIL || 'pedro@infinitecashflow.com,matheus@cs3investments.com').split(',').map(e => e.trim());
+  const recipientEmails = (process.env.W9_RECIPIENT_EMAIL || 'pedro@infinitecashflow.com,matheus@cs3investments.com,al@cs3investments.com').split(',').map(e => e.trim());
   const fromAddress = process.env.EMAIL_FROM || 'W9 Forms <w9@updates.cs3investments.com>';
 
   try {
