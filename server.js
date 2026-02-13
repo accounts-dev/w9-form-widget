@@ -51,10 +51,23 @@ function getTransporter() {
       port,
       secure: port === 465,
       auth: { user, pass },
+      connectionTimeout: 10000,  // 10s to connect
+      greetingTimeout: 10000,    // 10s for greeting
+      socketTimeout: 15000,      // 15s socket idle
     });
   }
   return transporter;
 }
+
+// Debug endpoint — shows if SMTP env vars are configured (no secrets exposed)
+app.get('/debug/smtp', (req, res) => {
+  res.json({
+    SMTP_HOST: process.env.SMTP_HOST ? '✓ set' : '✗ missing',
+    SMTP_PORT: process.env.SMTP_PORT || '587 (default)',
+    SMTP_USER: process.env.SMTP_USER ? `✓ set (${process.env.SMTP_USER.substring(0, 3)}...)` : '✗ missing',
+    SMTP_PASS: process.env.SMTP_PASS ? `✓ set (${process.env.SMTP_PASS.length} chars)` : '✗ missing',
+  });
+});
 
 // POST /api/generate-link
 // Body: { email: string, name: string }
