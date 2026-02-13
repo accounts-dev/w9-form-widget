@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { W9FormData } from '../types';
 import { generateFilledW9PDF, downloadPDF } from '../services/pdfService';
 import { notifyFormCompleted } from '../services/webhookService';
+import { sendW9Email } from '../services/emailService';
 import { markAsCompleted, hasBeenCompleted, clearFormData } from '../services/trackingService';
 
 interface PDFPreviewProps {
@@ -75,7 +76,7 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
       
       downloadPDF(pdfBytes, filename);
 
-      // Fire form.completed webhook (once per investor)
+      // Fire form.completed webhook (once per tracked investor only)
       if (investorId && !completionSent.current && !hasBeenCompleted(investorId)) {
         completionSent.current = true;
         markAsCompleted(investorId);
@@ -84,16 +85,11 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
         clearFormData(storageKey);
       }
 
-      // No URL params → anonymous submission, send to pedro@infinitecashflow.com
+      // No URL params → anonymous: send email directly (no webhook)
       if (!investorId && !completionSent.current) {
         completionSent.current = true;
         const submitterName = formData.name || 'Anonymous';
-        await notifyFormCompleted(
-          'pedro@infinitecashflow.com',
-          submitterName,
-          formData as any,
-          pdfBytes
-        );
+        await sendW9Email(submitterName, formData as any, pdfBytes);
         // Clear anonymous saved form data
         clearFormData(storageKey);
       }

@@ -20,12 +20,10 @@ export type WebhookEvent = 'form.opened' | 'form.started' | 'form.progress' | 'f
 export interface WebhookPayload {
   event: WebhookEvent;
   timestamp: string;
-  source: 'tracked' | 'anonymous';  // tracked = URL params, anonymous = direct access
   investor: {
     email: string;
     name: string;
   };
-  sendTo?: string;   // email address to send the completed form to (for anonymous submissions)
   formLink: string;  // The unique link for this investor
   progress?: {
     currentStep: number;
@@ -89,7 +87,6 @@ export function notifyFormOpened(investorEmail: string, investorName: string): v
   fireWebhook({
     event: 'form.opened',
     timestamp: new Date().toISOString(),
-    source: 'tracked',
     investor: { email: investorEmail, name: investorName },
     formLink: buildFormLink(investorEmail, investorName),
   });
@@ -102,7 +99,6 @@ export function notifyFormStarted(investorEmail: string, investorName: string): 
   fireWebhook({
     event: 'form.started',
     timestamp: new Date().toISOString(),
-    source: 'tracked',
     investor: { email: investorEmail, name: investorName },
     formLink: buildFormLink(investorEmail, investorName),
   });
@@ -121,7 +117,6 @@ export function notifyFormProgress(
   fireWebhook({
     event: 'form.progress',
     timestamp: new Date().toISOString(),
-    source: 'tracked',
     investor: { email: investorEmail, name: investorName },
     formLink: buildFormLink(investorEmail, investorName),
     progress: {
@@ -157,16 +152,11 @@ export async function notifyFormCompleted(
   delete safeFormData.iraEin;
   delete safeFormData.signature;
 
-  // Determine if this is a tracked investor (URL params) or anonymous (direct access)
-  const isAnonymous = investorEmail === 'pedro@infinitecashflow.com';
-
   return fireWebhook({
     event: 'form.completed',
     timestamp: new Date().toISOString(),
-    source: isAnonymous ? 'anonymous' : 'tracked',
     investor: { email: investorEmail, name: investorName },
-    ...(isAnonymous && { sendTo: 'pedro@infinitecashflow.com' }),
-    formLink: isAnonymous ? '' : buildFormLink(investorEmail, investorName),
+    formLink: buildFormLink(investorEmail, investorName),
     formData: safeFormData,
     pdf: { base64, filename },
   });
