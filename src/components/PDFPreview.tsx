@@ -11,6 +11,7 @@ interface PDFPreviewProps {
   setIsGenerating: (value: boolean) => void;
   investorId: string | null;
   investorName: string;
+  storageKey: string;
 }
 
 export const PDFPreview: React.FC<PDFPreviewProps> = ({
@@ -20,6 +21,7 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
   setIsGenerating,
   investorId,
   investorName,
+  storageKey,
 }) => {
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
@@ -79,7 +81,21 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
         markAsCompleted(investorId);
         await notifyFormCompleted(investorId, investorName, formData as any, pdfBytes);
         // Clear saved form data since they're done
-        clearFormData(investorId);
+        clearFormData(storageKey);
+      }
+
+      // No URL params → anonymous submission, send to pedro@infinitecashflow.com
+      if (!investorId && !completionSent.current) {
+        completionSent.current = true;
+        const submitterName = formData.name || 'Anonymous';
+        await notifyFormCompleted(
+          'pedro@infinitecashflow.com',
+          submitterName,
+          formData as any,
+          pdfBytes
+        );
+        // Clear anonymous saved form data
+        clearFormData(storageKey);
       }
       
       setTimeout(() => {

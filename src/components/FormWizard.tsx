@@ -37,21 +37,19 @@ export const FormWizard: React.FC = () => {
   const investorId = getInvestorEmailFromUrl();
   const investorName = getInvestorNameFromUrl() || 'Unknown';
   const isTracked = hasInvestorContext();
+  // Storage key: use investor email when tracked, 'anonymous' for direct access
+  const storageKey = investorId || 'anonymous';
 
-  // Load persisted form data & step (if returning investor)
+  // Load persisted form data & step (works for both tracked and anonymous)
   const loadInitialFormData = (): W9FormData => {
-    if (investorId) {
-      const saved = loadFormData(investorId);
-      if (saved) return { ...initialFormData, ...saved };
-    }
+    const saved = loadFormData(storageKey);
+    if (saved) return { ...initialFormData, ...saved };
     return initialFormData;
   };
 
   const loadInitialStep = (): number => {
-    if (investorId) {
-      const saved = loadCurrentStep(investorId);
-      if (saved !== null) return saved;
-    }
+    const saved = loadCurrentStep(storageKey);
+    if (saved !== null) return saved;
     return 0;
   };
 
@@ -151,24 +149,19 @@ export const FormWizard: React.FC = () => {
 
   // ───── Auto-save form data & step to localStorage ─────
   const persistFormData = useCallback(() => {
-    if (investorId) {
-      saveFormData(investorId, formData);
-    }
-  }, [investorId, formData]);
+    saveFormData(storageKey, formData);
+  }, [storageKey, formData]);
 
   // Debounced save
   useEffect(() => {
-    if (!investorId) return;
     const timer = setTimeout(persistFormData, 300);
     return () => clearTimeout(timer);
   }, [formData, persistFormData]);
 
   // Save step when it changes
   useEffect(() => {
-    if (investorId) {
-      saveCurrentStep(investorId, currentStep);
-    }
-  }, [currentStep, investorId]);
+    saveCurrentStep(storageKey, currentStep);
+  }, [currentStep, storageKey]);
 
   const updateFormData = (updates: Partial<W9FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -374,6 +367,7 @@ export const FormWizard: React.FC = () => {
         setIsGenerating={setIsGenerating}
         investorId={investorId}
         investorName={investorName}
+        storageKey={storageKey}
       />
     );
   }
