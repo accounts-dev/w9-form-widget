@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   W9FormData, 
   initialFormData, 
@@ -14,13 +14,53 @@ import { StepTaxClassification } from './StepTaxClassification';
 import { StepAddressTIN } from './StepAddressTIN';
 import { StepSignature } from './StepSignature';
 import { PDFPreview } from './PDFPreview';
+import {
+  getInvestorEmailFromUrl,
+  getInvestorNameFromUrl,
+  hasInvestorContext,
+  saveFormData,
+  loadFormData,
+  saveCurrentStep,
+  loadCurrentStep,
+  hasBeenOpened,
+  markAsOpened,
+  hasBeenStarted,
+  markAsStarted,
+} from '../services/trackingService';
+import {
+  notifyFormOpened,
+  notifyFormStarted,
+  notifyFormProgress,
+} from '../services/webhookService';
 
 export const FormWizard: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<W9FormData>(initialFormData);
+  const investorId = getInvestorEmailFromUrl();
+  const investorName = getInvestorNameFromUrl() || 'Unknown';
+  const isTracked = hasInvestorContext();
+
+  // Load persisted form data & step (if returning investor)
+  const loadInitialFormData = (): W9FormData => {
+    if (investorId) {
+      const saved = loadFormData(investorId);
+      if (saved) return { ...initialFormData, ...saved };
+    }
+    return initialFormData;
+  };
+
+  const loadInitialStep = (): number => {
+    if (investorId) {
+      const saved = loadCurrentStep(investorId);
+      if (saved !== null) return saved;
+    }
+    return 0;
+  };
+
+  const [currentStep, setCurrentStep] = useState(loadInitialStep);
+  const [formData, setFormData] = useState<W9FormData>(loadInitialFormData);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [showPreview, setShowPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const hasNotifiedOpened = useRef(false);
 
   // Auto-set tax classification based on account type and LLC type
   useEffect(() => {
@@ -97,6 +137,38 @@ export const FormWizard: React.FC = () => {
       }
     }
   }, [formData.accountType, formData.llcType]);
+
+  // ───── Webhook: form.opened (once per investor, first visit) ─────
+  useEffect(() => {
+    if (isTracked && investorId && !hasNotifiedOpened.current) {
+      hasNotifiedOpened.current = true;
+      if (!hasBeenOpened(investorId)) {
+        markAsOpened(investorId);
+        notifyFormOpened(investorId, investorName);
+      }
+    }
+  }, []);
+
+  // ───── Auto-save form data & step to localStorage ─────
+  const persistFormData = useCallback(() => {
+    if (investorId) {
+      saveFormData(investorId, formData);
+    }
+  }, [investorId, formData]);
+
+  // Debounced save
+  useEffect(() => {
+    if (!investorId) return;
+    const timer = setTimeout(persistFormData, 300);
+    return () => clearTimeout(timer);
+  }, [formData, persistFormData]);
+
+  // Save step when it changes
+  useEffect(() => {
+    if (investorId) {
+      saveCurrentStep(investorId, currentStep);
+    }
+  }, [currentStep, investorId]);
 
   const updateFormData = (updates: Partial<W9FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -191,8 +263,26 @@ export const FormWizard: React.FC = () => {
     
     const visibleSteps = getVisibleSteps();
     if (currentStep < visibleSteps.length - 1) {
-      setCurrentStep(prev => prev + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
       setErrors({});
+
+      // ── Webhooks ──
+      if (isTracked && investorId) {
+        // First real forward navigation = form.started
+        if (currentStep === 0 && !hasBeenStarted(investorId)) {
+          markAsStarted(investorId);
+          notifyFormStarted(investorId, investorName);
+        }
+        // Every forward step = form.progress
+        notifyFormProgress(
+          investorId,
+          investorName,
+          nextStep,
+          visibleSteps.length,
+          visibleSteps[nextStep].title
+        );
+      }
     } else {
       // Final step - show preview
       setShowPreview(true);
@@ -282,6 +372,8 @@ export const FormWizard: React.FC = () => {
         onEdit={handleEditFromPreview}
         isGenerating={isGenerating}
         setIsGenerating={setIsGenerating}
+        investorId={investorId}
+        investorName={investorName}
       />
     );
   }

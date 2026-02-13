@@ -1,25 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { W9FormData } from '../types';
 import { generateFilledW9PDF, downloadPDF } from '../services/pdfService';
+import { notifyFormCompleted } from '../services/webhookService';
+import { markAsCompleted, hasBeenCompleted, clearFormData } from '../services/trackingService';
 
 interface PDFPreviewProps {
   formData: W9FormData;
   onEdit: () => void;
   isGenerating: boolean;
   setIsGenerating: (value: boolean) => void;
+  investorId: string | null;
+  investorName: string;
 }
 
 export const PDFPreview: React.FC<PDFPreviewProps> = ({
   formData,
   onEdit,
   isGenerating,
-  setIsGenerating
+  setIsGenerating,
+  investorId,
+  investorName,
 }) => {
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadComplete, setDownloadComplete] = useState(false);
+  const completionSent = useRef(false);
 
   useEffect(() => {
     generatePreview();
@@ -55,7 +62,7 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (pdfBytes) {
       setIsDownloading(true);
       
@@ -65,6 +72,15 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
       const filename = `W9_${safeName}_${timestamp}.pdf`;
       
       downloadPDF(pdfBytes, filename);
+
+      // Fire form.completed webhook (once per investor)
+      if (investorId && !completionSent.current && !hasBeenCompleted(investorId)) {
+        completionSent.current = true;
+        markAsCompleted(investorId);
+        await notifyFormCompleted(investorId, investorName, formData as any, pdfBytes);
+        // Clear saved form data since they're done
+        clearFormData(investorId);
+      }
       
       setTimeout(() => {
         setIsDownloading(false);
