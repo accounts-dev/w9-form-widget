@@ -56,25 +56,9 @@ jobs:
                 background: #f1f5f9;
                 min-height: 100vh;
               }
-              .demo-header {
-                text-align: center;
-                margin-bottom: 30px;
-              }
-              .demo-header h1 {
-                color: #1e293b;
-                margin: 0 0 10px 0;
-              }
-              .demo-header p {
-                color: #64748b;
-                margin: 0;
-              }
             </style>
           </head>
           <body>
-            <div class="demo-header">
-              <h1>W9 Form Widget</h1>
-              <p>Fill out your W-9 form and download the completed PDF</p>
-            </div>
             <div id="w9-form"></div>
             <script src="./w9-widget.iife.js"></script>
             <script>

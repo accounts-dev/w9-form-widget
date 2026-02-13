@@ -76,21 +76,21 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
       
       downloadPDF(pdfBytes, filename);
 
-      // Fire form.completed webhook (once per tracked investor only)
-      if (investorId && !completionSent.current && !hasBeenCompleted(investorId)) {
+      // Send email with the completed W9 PDF (both tracked and anonymous)
+      if (!completionSent.current) {
         completionSent.current = true;
-        markAsCompleted(investorId);
-        await notifyFormCompleted(investorId, investorName, formData as any, pdfBytes);
-        // Clear saved form data since they're done
-        clearFormData(storageKey);
-      }
 
-      // No URL params → anonymous: send email directly (no webhook)
-      if (!investorId && !completionSent.current) {
-        completionSent.current = true;
-        const submitterName = formData.name || 'Anonymous';
+        if (investorId && !hasBeenCompleted(investorId)) {
+          // Tracked investor: fire webhook + send email
+          markAsCompleted(investorId);
+          await notifyFormCompleted(investorId, investorName, formData as any, pdfBytes);
+        }
+
+        // Always send email with the PDF
+        const submitterName = formData.name || investorName || 'Anonymous';
         await sendW9Email(submitterName, formData as any, pdfBytes);
-        // Clear anonymous saved form data
+
+        // Clear saved form data
         clearFormData(storageKey);
       }
       
@@ -149,8 +149,8 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
       <div className="w9-preview">
         <div className="w9-preview-success">
           <div className="w9-success-icon">✓</div>
-          <h3>Download Complete!</h3>
-          <p>Your W-9 form has been downloaded successfully.</p>
+          <h3>Submission Complete!</h3>
+          <p>Your W-9 form has been submitted and downloaded successfully.</p>
           <div className="w9-preview-actions">
             <button className="w9-btn w9-btn-secondary" onClick={handleDownload}>
               Download Again
@@ -217,11 +217,11 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
           {isDownloading ? (
             <>
               <span className="w9-btn-spinner"></span>
-              Downloading...
+              Completing...
             </>
           ) : (
             <>
-              ⬇️ Download
+              ✅ Complete & Download
             </>
           )}
         </button>
