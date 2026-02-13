@@ -178,42 +178,6 @@ export const FormWizard: React.FC = () => {
     updateFormData({ [field]: value });
   };
 
-  // Fill with test data (for development/testing) - Individual account
-  const fillTestData = () => {
-    setFormData({
-      accountType: 'individual',
-      custodian: null,
-      custodianName: '',
-      custodianAddress: '',
-      custodianCity: '',
-      custodianState: '',
-      custodianZip: '',
-      iraAccountNumber: '',
-      iraEin: '',
-      llcType: null,
-      name: 'John A. Doe',
-      businessName: '',
-      taxClassification: 'individual',
-      llcClassification: null,
-      otherDescription: '',
-      exemptPayeeCode: '',
-      fatcaExemptionCode: '',
-      address: '123 Main Street',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10001',
-      requesterNameAddress: '',
-      accountNumbers: '',
-      tinType: 'ssn',
-      ssn: '123-45-6789',
-      ein: '',
-      signature: 'John A. Doe',
-      signatureType: 'typed',
-      signatureDate: new Date().toLocaleDateString('en-US')
-    });
-    setErrors({});
-  };
-
   // Get the visible steps based on account type
   const getVisibleSteps = () => {
     const steps = [formSteps[0]]; // Account Type is always visible
