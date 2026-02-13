@@ -382,18 +382,6 @@ export const FormWizard: React.FC = () => {
         />
       </div>
 
-      {/* Test Data Button */}
-      <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-        <button
-          type="button"
-          className="w9-btn-test-data"
-          onClick={fillTestData}
-          title="Fill form with test data"
-        >
-          🧪 Fill Test Data
-        </button>
-      </div>
-
       {/* Progress Steps */}
       <div className="w9-progress">
         {getVisibleSteps().map((step, index) => (
