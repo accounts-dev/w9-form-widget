@@ -351,10 +351,20 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
     } else {
       // Typed signature — render with cursive font on a canvas, then embed as image
       try {
+        const fontFamily = "'Dancing Script', cursive";
+        const fontSize = 32;
+
+        // Ensure Dancing Script is loaded before rendering
+        try {
+          await document.fonts.load(`${fontSize}px 'Dancing Script'`);
+          await document.fonts.ready;
+        } catch (fontErr) {
+          console.warn('Could not preload Dancing Script font:', fontErr);
+        }
+
         const sigCanvas = document.createElement('canvas');
         const sigCtx = sigCanvas.getContext('2d')!;
-        const fontSize = 32;
-        sigCtx.font = `${fontSize}px 'Dancing Script', 'Brush Script MT', 'Segoe Script', cursive`;
+        sigCtx.font = `${fontSize}px ${fontFamily}`;
         const textWidth = sigCtx.measureText(formData.signature).width;
         
         // Size canvas to fit the text with some padding
@@ -364,7 +374,7 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
         // Clear and redraw (canvas resize resets context)
         sigCtx.fillStyle = 'white';
         sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
-        sigCtx.font = `${fontSize}px 'Dancing Script', 'Brush Script MT', 'Segoe Script', cursive`;
+        sigCtx.font = `${fontSize}px ${fontFamily}`;
         sigCtx.fillStyle = 'black';
         sigCtx.textBaseline = 'middle';
         sigCtx.fillText(formData.signature, 10, sigCanvas.height / 2);
