@@ -349,16 +349,61 @@ export async function generateFilledW9PDF(formData: W9FormData): Promise<Uint8Ar
         console.error('Failed to embed signature image:', error);
       }
     } else {
-      // Typed signature - create a text field or draw text
-      // Use a slightly script-like appearance
-      firstPage.drawText(formData.signature, {
-        x: signatureFieldX,
-        y: signatureFieldY + 3,
-        size: 12,
-        font: helvetica,
-        color: rgb(0, 0, 0),
-      });
-      console.log(`Drew typed signature at x=${signatureFieldX}, y=${signatureFieldY + 3}`);
+      // Typed signature — render with cursive font on a canvas, then embed as image
+      try {
+        const sigCanvas = document.createElement('canvas');
+        const sigCtx = sigCanvas.getContext('2d')!;
+        const fontSize = 32;
+        sigCtx.font = `${fontSize}px 'Dancing Script', 'Brush Script MT', 'Segoe Script', cursive`;
+        const textWidth = sigCtx.measureText(formData.signature).width;
+        
+        // Size canvas to fit the text with some padding
+        sigCanvas.width = Math.ceil(textWidth + 20);
+        sigCanvas.height = Math.ceil(fontSize * 1.6);
+        
+        // Clear and redraw (canvas resize resets context)
+        sigCtx.fillStyle = 'white';
+        sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+        sigCtx.font = `${fontSize}px 'Dancing Script', 'Brush Script MT', 'Segoe Script', cursive`;
+        sigCtx.fillStyle = 'black';
+        sigCtx.textBaseline = 'middle';
+        sigCtx.fillText(formData.signature, 10, sigCanvas.height / 2);
+        
+        // Convert canvas to PNG and embed
+        const dataUrl = sigCanvas.toDataURL('image/png');
+        const sigData = dataUrl.split(',')[1];
+        const sigBytes = Uint8Array.from(atob(sigData), c => c.charCodeAt(0));
+        const sigImage = await pdfDoc.embedPng(sigBytes);
+        
+        // Scale to fit signature area
+        const maxWidth = signatureFieldWidth;
+        const maxHeight = 20;
+        const aspectRatio = sigImage.width / sigImage.height;
+        let sigWidth = maxWidth;
+        let sigHeight = sigWidth / aspectRatio;
+        if (sigHeight > maxHeight) {
+          sigHeight = maxHeight;
+          sigWidth = sigHeight * aspectRatio;
+        }
+        
+        firstPage.drawImage(sigImage, {
+          x: signatureFieldX,
+          y: signatureFieldY,
+          width: sigWidth,
+          height: sigHeight,
+        });
+        console.log(`Drew typed signature as cursive image at x=${signatureFieldX}, y=${signatureFieldY}, size=${sigWidth}x${sigHeight}`);
+      } catch (error) {
+        console.error('Failed to render cursive signature, falling back to Helvetica:', error);
+        // Fallback: plain text
+        firstPage.drawText(formData.signature, {
+          x: signatureFieldX,
+          y: signatureFieldY + 3,
+          size: 12,
+          font: helvetica,
+          color: rgb(0, 0, 0),
+        });
+      }
     }
   }
 
